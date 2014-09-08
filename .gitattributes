@@ -1,0 +1,2 @@
+wheels2pkg/_version.py export-subst
+wheels2dmg/_version.py export-subst

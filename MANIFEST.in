@@ -1,0 +1,3 @@
+include versioneer.py
+include wheels2pkg/_version.py
+include wheels2dmg/_version.py
