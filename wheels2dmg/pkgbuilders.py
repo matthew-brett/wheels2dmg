@@ -2,7 +2,8 @@
 """
 from __future__ import division, print_function
 
-from os.path import exists, join as pjoin
+import os
+from os.path import exists, join as pjoin, abspath
 import shutil
 from subprocess import check_call
 try:
@@ -13,10 +14,10 @@ except ImportError:
     from urllib.parse import urlparse
 
 
+from .tmpdirs import TemporaryDirectory
+
 # Installed location of Python.org Python
 PY_ORG_BASE='/Library/Frameworks/Python.framework/Versions/'
-# Subdirectory containing wheels and source packages
-PKG_DIR = 'packages'
 
 
 def get_pip_params(args):
@@ -92,7 +93,7 @@ def get_wheels(pip_exe, pip_params, requirements, out_dir):
     check_call(pip_wheel + list(requirements))
 
 
-def write_post(py_version, requirements, pkg_dir, scripts_dir):
+def write_post(py_version, requirements, pkg_sdir, scripts_dir):
     to_install = ', '.join(['"{0}"'.format(r) for r in requirements])
     fname = pjoin(scripts_dir, 'postinstall')
     with open(fname, 'wt') as fobj:
@@ -109,7 +110,7 @@ package_path = os.environ.get('PACKAGE_PATH')
 if package_path is None:
     sys.exit(10)
 package_dir = dirname(package_path)
-wheelhouse = package_dir + '/{pkg_dir}'
+wheelhouse = package_dir + '/{pkg_sdir}'
 # Find Python.org Python
 python_bin = '{py_org_base}/{py_version}/bin'
 python_path = python_bin +  '/python{py_version}'
@@ -129,19 +130,27 @@ check_call(pip_cmd + [{to_install}])
 """.format(py_org_base = PY_ORG_BASE,
            py_version = py_version,
            to_install = to_install,
-           pkg_dir = pkg_dir,
+           pkg_sdir = pkg_sdir,
           ))
     check_call(['chmod', 'a+x', fname])
 
 
-def write_pkg(out_dir, identifier, version):
-    pkg_fname = pjoin(out_dir, '{0}-{1}.pkg'.format(identifier, version))
-    check_call(['pkgbuild', '--root', 'pkg_template', '--nopayload', '--scripts',
-                'scripts', '--identifier', identifier, '--version', version,
-                pkg_fname])
+def write_pkg(py_version, requirements, out_dir, pkg_sdir, identifier, version):
+    out_dir = abspath(out_dir)
+    with TemporaryDirectory() as scripts:
+        write_post(py_version, requirements, pkg_sdir, scripts)
+        pkg_fname = pjoin(out_dir, '{0}-{1}.pkg'.format(identifier, version))
+        check_call(['pkgbuild',
+                    '--nopayload',
+                    '--scripts', scripts,
+                    '--identifier', identifier, '--version', version,
+                    pkg_fname])
+    return pkg_fname
 
 
 def write_dmg(dmg_in_dir, dmg_out_dir, identifier, py_version, pkg_version):
+    if not exists(dmg_out_dir):
+        os.mkdir(dmg_out_dir)
     dmg_name = '{0}-py{1}-{2}'.format(
         identifier,
         py_version.replace('.', ''),

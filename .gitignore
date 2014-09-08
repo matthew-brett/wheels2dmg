@@ -1,4 +1,6 @@
 *.pyc
+*.dmg
 build/
 dist/
+tmp/
 MANIFEST

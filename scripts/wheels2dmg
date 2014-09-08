@@ -14,18 +14,21 @@ EPILOG = \
 * Package result into DMG file.
 """
 
-from os.path import abspath, join as pjoin
+import os
+from os.path import abspath
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
-from wheels2dmg import (get_pip_params, get_get_pip, upgrade_pip, get_wheels,
-                        write_post, write_pkg, write_dmg)
-from wheels2dmg.tmpdirs import (TemporaryDirectory, InGivenDirectory,
-                                InTemporaryDirectory)
+from wheels2dmg.pkgbuilders import (get_pip_params, get_get_pip, upgrade_pip,
+                                    get_wheels, write_pkg, write_dmg)
+from wheels2dmg.tmpdirs import (InGivenDirectory, InTemporaryDirectory)
 
 # Defaults
 PYTHON_VERSION='2.7'
 # get-pip.py URL
 GET_PIP_URL = 'https://bootstrap.pypa.io/get-pip.py'
+
+# Subdirectory containing wheels and source packages
+PKG_SDIR = 'packages'
 
 
 def main():
@@ -59,17 +62,14 @@ def main():
     if args.dmg_in_dir is None:
         ctx_mgr = InTemporaryDirectory
     else:
-        ctx_mgr = lambda x : InGivenDirectory(args.dmg_in_dir)
+        ctx_mgr = lambda : InGivenDirectory(args.dmg_in_dir)
     with ctx_mgr():
-        get_pip_path = get_get_pip(args.get_pip_url)
+        os.mkdir(PKG_SDIR)
+        get_pip_path = get_get_pip(args.get_pip_url, PKG_SDIR)
         pip_exe = upgrade_pip(get_pip_path, args.python_version, pip_params)
-        get_wheels(pip_exe, pip_params, args.requirements, 'packages')
-        with TemporaryDirectory() as tmpdir:
-            template_dir = pjoin(tmpdir, 'pkg_template')
-            scripts_dir = pjoin(tmpdir, 'scripts')
-            write_post(args.python_version, args.requirements,
-                       template_dir, scripts_dir)
-            write_pkg('.', args.pkg_name, args.pkg_version)
+        get_wheels(pip_exe, pip_params, args.requirements, PKG_SDIR)
+        write_pkg(args.python_version, args.requirements, 
+                  '.', PKG_SDIR, args.pkg_name, args.pkg_version)
         write_dmg('.', dmg_out_dir,
                   args.pkg_name, args.python_version, args.pkg_version)
 
