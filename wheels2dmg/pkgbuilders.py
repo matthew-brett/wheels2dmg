@@ -67,13 +67,6 @@ def upgrade_pip(get_pip_path, py_version, pip_params):
     return pip_exe
 
 
-def get_wheels(pip_exe, pip_params, requirements, out_dir):
-    # Get wheels for pip and setuptools
-    pip_wheel = [pip_exe, 'wheel', '-w', out_dir] + pip_params
-    check_call(pip_wheel + ['pip', 'setuptools'])
-    check_call(pip_wheel + list(requirements))
-
-
 def write_post(py_version, requirements, pkg_sdir, scripts_dir):
     to_install = ', '.join(['"{0}"'.format(r) for r in requirements])
     fname = pjoin(scripts_dir, 'postinstall')
@@ -106,7 +99,6 @@ if not exists(expected_pip):
     sys.exit(30)
 pip_cmd = [expected_pip, 'install', '--no-index', '--upgrade',
            '--find-links', wheelhouse]
-check_call(pip_cmd + ['setuptools'])
 check_call(pip_cmd + [{to_install}])
 """.format(py_org_base = PY_ORG_BASE,
            py_version = py_version,

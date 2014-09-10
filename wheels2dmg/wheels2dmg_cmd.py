@@ -4,11 +4,11 @@ from __future__ import division, print_function
 
 import os
 from os.path import abspath
+from subprocess import check_call
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
-from .piputils import recon_pip_args
-from .pkgbuilders import (get_get_pip, upgrade_pip, get_wheels, write_pkg,
-                          write_dmg)
+from .piputils import recon_pip_args, get_requirements, get_req_strings
+from .pkgbuilders import (get_get_pip, upgrade_pip, write_pkg, write_dmg)
 from .tmpdirs import (InGivenDirectory, InTemporaryDirectory)
 
 # Defaults
@@ -71,11 +71,12 @@ def main():
     # parse the command line
     parser = get_parser()
     args = parser.parse_args()
-    reqs = get_requirements(args.req_specs, args.requirement)
-    if not reqs.has_requirements:
+    # Split pip command line options into requirements and other parameters
+    req_params, fetch_params = recon_pip_args(args)
+    # We need at least one requirement
+    if len(req_params) == 0:
         parser.print_help()
         return 1
-    pip_params = recon_pip_args(args)
     dmg_out_dir = abspath(args.dmg_out_dir)
     if args.dmg_build_dir is None:
         ctx_mgr = InTemporaryDirectory
@@ -84,9 +85,16 @@ def main():
     with ctx_mgr():
         os.mkdir(PKG_SDIR)
         get_pip_path = get_get_pip(args.get_pip_url, PKG_SDIR)
-        pip_exe = upgrade_pip(get_pip_path, args.python_version, pip_params)
-        get_wheels(pip_exe, pip_params, args.requirements, PKG_SDIR)
-        write_pkg(args.python_version, args.requirements, 
+        # Find or install pip, install wheel, for given Python.org Python
+        pip_exe = upgrade_pip(get_pip_path, args.python_version, fetch_params)
+        # Fetch the wheels we need
+        check_call([pip_exe, 'wheel', '-w', PKG_SDIR, 'pip', 'setuptools'] +
+                   req_params + fetch_params)
+        # Analyze the pip requirements
+        reqs = get_requirements(args.req_specs, args.requirement)
+        # Write scripts only installer
+        write_pkg(args.python_version, get_req_strings(reqs),
                   '.', PKG_SDIR, args.pkg_name, args.pkg_version)
+        # Write packages and installer to dmg
         write_dmg('.', dmg_out_dir,
                   args.pkg_name, args.python_version, args.pkg_version)
