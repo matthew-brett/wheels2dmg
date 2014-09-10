@@ -48,13 +48,13 @@ def recon_pip_args(args, with_reqs=True):
     return params
 
 
-def get_requirements(requirements, requirement_files = ()):
+def get_requirements(req_specs, requirement_files = ()):
     """ Get set of requirements from pip-like input arguments
 
     Parameters
     ----------
-    requirements : sequence
-        sequence of requirement names, maybe with versions
+    req_specs : sequence
+        sequence of requirement specifiers, maybe with versions
     requirement_files : sequence
         sequence of filenames or URLs with requirements
 
@@ -70,7 +70,7 @@ def get_requirements(requirements, requirement_files = ()):
         download_dir=None,
         session=session,
     )
-    for name in requirements:
+    for name in req_specs:
         requirement_set.add_requirement(
             InstallRequirement.from_line(name))
     for filename in requirement_files:
