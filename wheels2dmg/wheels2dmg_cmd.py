@@ -33,12 +33,14 @@ def get_parser():
 * Write "postinstall" script to install setuptools, pip, then install wheels
 * Write "postinstall" script in ".pkg" double click installer
 * Package result into DMG file.
+
+There must be at least one REQ_SPEC or REQUIREMENT
 """,
         formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument('pkg_name', type=str, help='root name of installer')
     parser.add_argument('pkg_version', type=str, help='version of installer')
     parser.add_argument('req_specs', type=str, nargs='*', default=[],
-                        help='pip requirement specifiers')
+                        help='pip requirement specifiers', metavar='REQ_SPEC')
     parser.add_argument('--python-version',  type=str, default=PYTHON_VERSION,
                         help='Python version in major.minor format, e.g "3.4"')
     parser.add_argument('--get-pip-url', type=str, default=GET_PIP_URL,
@@ -52,7 +54,7 @@ def get_parser():
                         '(default is current directory)')
     # The rest of the arguments are destined for pip wheel / install calls
     parser.add_argument('--requirement', '-r', type=str, action='append',
-                        help='pip requirement file(s)')
+                        help='pip requirement file(s)', metavar='REQUIREMENT')
     parser.add_argument('--index-url', '-i', type=str,
                         help='base URL of Python index (see pip install)')
     parser.add_argument('--extra-index-url', type=str, action='append',
@@ -67,7 +69,12 @@ def get_parser():
 
 def main():
     # parse the command line
-    args = get_parser().parse_args()
+    parser = get_parser()
+    args = parser.parse_args()
+    reqs = get_requirements(args.req_specs, args.requirement)
+    if not reqs.has_requirements:
+        parser.print_help()
+        return 1
     pip_params = recon_pip_args(args)
     dmg_out_dir = abspath(args.dmg_out_dir)
     if args.dmg_in_dir is None:
