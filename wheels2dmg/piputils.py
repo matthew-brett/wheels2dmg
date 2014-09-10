@@ -50,14 +50,14 @@ def recon_pip_args(args):
     return req_params, other_params
 
 
-def get_requirements(req_specs, requirement_files = ()):
+def get_requirements(req_specs, requirement_files=None):
     """ Get set of requirements from pip-like input arguments
 
     Parameters
     ----------
     req_specs : sequence
         sequence of requirement specifiers, maybe with versions
-    requirement_files : sequence
+    requirement_files : None or sequence, optional
         sequence of filenames or URLs with requirements
 
     Returns
@@ -65,6 +65,8 @@ def get_requirements(req_specs, requirement_files = ()):
     requirement_set : RequiremenSet instance
         Pip requirements set
     """
+    if requirement_files is None:
+        requirement_files = []
     session = PipSession()
     requirement_set = RequirementSet(
         build_dir=None,

@@ -125,8 +125,10 @@ def assert_names_equal(req_set, names):
 
 def test_get_requirements():
     # Test get_requirements function
-    # Gets list of pip requiremnts from input arguments
+    # Gets set of pip requiremnts from input arguments
     assert_names_equal(get_requirements([]), [])
+    # Can use None for default second argument
+    assert_names_equal(get_requirements([], None), [])
     assert_names_equal(get_requirements(['one']), ['one'])
     assert_names_equal(get_requirements(['one', 'two==1.2']),
                        ['one', 'two==1.2'])
