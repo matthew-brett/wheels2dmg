@@ -5,6 +5,7 @@ from os.path import join as pjoin, split as psplit, abspath, dirname
 
 from pip.exceptions import InstallationError
 from ..piputils import (recon_pip_args, get_requirements, get_req_strings)
+from ..wheels2dmg_cmd import get_parser
 from ..tmpdirs import InTemporaryDirectory
 
 from nose.tools import (assert_true, assert_false, assert_raises,
@@ -61,6 +62,9 @@ def test_reconstruct_pip_args():
     args.extra_index_url = extra_urls
     exp_params += ['--extra-index-url=' + u for u in extra_urls]
     assert_equal(recon_pip_args(args), exp_params)
+    # False does not trigger --no-index
+    args.no_index = False
+    assert_equal(recon_pip_args(args), exp_params)
     args.no_index = True
     exp_params += ['--no-index']
     assert_equal(recon_pip_args(args), exp_params)
@@ -70,6 +74,28 @@ def test_reconstruct_pip_args():
     args.find_links = link_urls
     exp_params += ['--find-links=' + u for u in link_urls]
     assert_equal(recon_pip_args(args), exp_params)
+
+
+def test_pip_parser_recon():
+    # Check roundtrip using our parser and recon_pip_args
+    parser = get_parser()
+    args = ['pkg_name', '1.0']
+    for in_out_args in [
+        ([],),
+        (['--requirement=file1.txt'],),
+        (['-r', 'file1.txt'], ['--requirement=file1.txt']),
+        (['--requirement=file1.txt', '--requirement=file2.txt'],),
+        (['-r', 'file1.txt', '-r', 'file2.txt'],
+         ['--requirement=file1.txt', '--requirement=file2.txt']),
+        (['--no-index'],),
+    ]:
+        if len(in_out_args) == 1:
+            in_args = in_out_args[0]
+            out_args = in_args
+        else:
+            in_args, out_args = in_out_args
+        parsed = parser.parse_args(args + in_args)
+        assert_equal(recon_pip_args(parsed), out_args)
 
 
 def assert_names_equal(req_set, names):
