@@ -7,8 +7,11 @@ from pip.req import InstallRequirement, RequirementSet, parse_requirements
 from pip.download import PipSession
 
 
-def recon_pip_args(args, with_reqs=True):
+def recon_pip_args(args):
     """ Reconstruct known pip command-line parameters from argument object
+
+    Split parameters into parameters specifying requirements, and parameters
+    not specifying requirements
 
     Positional arguments to command line found in ``args.req_specs``
     (requirement specifiers).
@@ -24,28 +27,27 @@ def recon_pip_args(args, with_reqs=True):
 
     Returns
     -------
-    params : list
-        Command line parameters for pip
+    req_params : list
+        Command line parameters for pip that specify requirements
+    other_params : list
+        Command line parameters for pip that do not specify requirements
     """
-    if not with_reqs:
-        args = copy(args)
-        args.req_specs = None
-        args.requirement = None
-    params = [] if args.req_specs is None else list(args.req_specs)
+    req_params = [] if args.req_specs is None else list(args.req_specs)
     if not args.requirement is None:
         for requirement in args.requirement:
-            params.append('--requirement=' + requirement)
+            req_params.append('--requirement=' + requirement)
+    other_params = []
     if not args.index_url is None:
-        params.append('--index-url=' + args.index_url)
+        other_params.append('--index-url=' + args.index_url)
     if not args.extra_index_url is None:
         for extra_index_url in args.extra_index_url:
-            params.append('--extra-index-url=' + extra_index_url)
+            other_params.append('--extra-index-url=' + extra_index_url)
     if args.no_index:
-        params.append('--no-index')
+        other_params.append('--no-index')
     if not args.find_links is None:
         for link in args.find_links:
-            params.append('--find-links=' + link)
-    return params
+            other_params.append('--find-links=' + link)
+    return req_params, other_params
 
 
 def get_requirements(req_specs, requirement_files = ()):

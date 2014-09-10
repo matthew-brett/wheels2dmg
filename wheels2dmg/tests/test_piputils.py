@@ -48,43 +48,38 @@ def test_reconstruct_pip_args():
         no_index = None
         find_links = None
     args = A()
-    assert_equal(recon_pip_args(args), [])
+    assert_equal(recon_pip_args(args), ([], []))
     args.req_specs = ()
-    assert_equal(recon_pip_args(args), [])
+    assert_equal(recon_pip_args(args), ([], []))
     args.req_specs = ['foot', 'barrel']
-    exp_params = ['foot', 'barrel']
-    assert_equal(recon_pip_args(args), exp_params)
+    exp_reqs = ['foot', 'barrel']
+    assert_equal(recon_pip_args(args), (exp_reqs, []))
     args.requirement = ()
-    assert_equal(recon_pip_args(args), exp_params)
+    assert_equal(recon_pip_args(args), (exp_reqs, []))
     args.requirement = ('file1.txt', 'file2.txt')
-    exp_params += ['--requirement=file1.txt', '--requirement=file2.txt']
-    assert_equal(recon_pip_args(args), exp_params)
+    exp_reqs += ['--requirement=file1.txt', '--requirement=file2.txt']
+    assert_equal(recon_pip_args(args), (exp_reqs, []))
     args.index_url = 'http://matthew.dynevor.org'
-    exp_params.append('--index-url=http://matthew.dynevor.org')
-    assert_equal(recon_pip_args(args), exp_params)
+    exp_others = ['--index-url=http://matthew.dynevor.org']
+    assert_equal(recon_pip_args(args), (exp_reqs, exp_others))
     args.extra_index_url = ()
-    assert_equal(recon_pip_args(args), exp_params)
+    assert_equal(recon_pip_args(args), (exp_reqs, exp_others))
     extra_urls = ('http://www.python.org', 'http://wheels.scikit-image.org')
     args.extra_index_url = extra_urls
-    exp_params += ['--extra-index-url=' + u for u in extra_urls]
-    assert_equal(recon_pip_args(args), exp_params)
+    exp_others += ['--extra-index-url=' + u for u in extra_urls]
+    assert_equal(recon_pip_args(args), (exp_reqs, exp_others))
     # False does not trigger --no-index
     args.no_index = False
-    assert_equal(recon_pip_args(args), exp_params)
+    assert_equal(recon_pip_args(args), (exp_reqs, exp_others))
     args.no_index = True
-    exp_params += ['--no-index']
-    assert_equal(recon_pip_args(args), exp_params)
+    exp_others += ['--no-index']
+    assert_equal(recon_pip_args(args), (exp_reqs, exp_others))
     args.find_links = ()
-    assert_equal(recon_pip_args(args), exp_params)
+    assert_equal(recon_pip_args(args), (exp_reqs, exp_others))
     link_urls = ('http://nipy.org', 'http://nipy.org/nibabel')
     args.find_links = link_urls
-    exp_params += ['--find-links=' + u for u in link_urls]
-    assert_equal(recon_pip_args(args), exp_params)
-    # No reqs argument removes req_specs, requirements
-    assert_equal(recon_pip_args(args, with_reqs=False), exp_params[4:])
-    # Doesn't modify original
-    assert_equal(recon_pip_args(args), exp_params)
-    assert_equal(recon_pip_args(args, with_reqs=True), exp_params)
+    exp_others += ['--find-links=' + u for u in link_urls]
+    assert_equal(recon_pip_args(args), (exp_reqs, exp_others))
 
 
 def test_parser_reconstruct_pip():
@@ -121,7 +116,7 @@ def test_parser_reconstruct_pip():
         else:
             in_args, out_args = in_out_args
         parsed = parser.parse_args(args + in_args)
-        assert_equal(recon_pip_args(parsed), out_args)
+        assert_equal(sum(recon_pip_args(parsed), []), out_args)
 
 
 def assert_names_equal(req_set, names):
