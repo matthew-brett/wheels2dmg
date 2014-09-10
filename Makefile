@@ -13,3 +13,4 @@ install:
 	sudo installer -pkg /Volumes/scipy-stack-py27-1.0/scipy-stack-1.0.pkg \
 	    -verbose -target /
 	hdiutil detach /Volumes/scipy-stack-py27-1.0
+	python -c 'import numpy, scipy, matplotlib, IPython'
