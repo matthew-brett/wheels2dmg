@@ -3,7 +3,7 @@
 from __future__ import division, print_function
 
 import os
-from os.path import exists, join as pjoin, abspath
+from os.path import exists, join as pjoin, abspath, expanduser
 import shutil
 from subprocess import check_call
 try:
@@ -26,7 +26,8 @@ def get_get_pip(get_pip_url, out_dir):
     Parameters
     ----------
     get_pip_url : str
-        File path or URL pointing to ``get-pip.py`` installer.
+        File path or URL pointing to ``get-pip.py`` installer.  File path can
+        contain ``~`` for home directory.
     out_dir : str
         Directory to which to write copy of ``get-pip.py``
 
@@ -38,7 +39,8 @@ def get_get_pip(get_pip_url, out_dir):
     parsed = urlparse(get_pip_url)
     get_pip_path = pjoin(out_dir, 'get-pip.py')
     if parsed.scheme == '': # File path
-        shutil.copyfile(get_pip_url, get_pip_path)
+        gpp_path = expanduser(get_pip_url)
+        shutil.copyfile(gpp_path, get_pip_path)
     else: # URL
         url_obj = urlopen(get_pip_url)
         with open(get_pip_path, 'wt') as fobj:
