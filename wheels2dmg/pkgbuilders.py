@@ -20,25 +20,6 @@ from .tmpdirs import TemporaryDirectory
 PY_ORG_BASE='/Library/Frameworks/Python.framework/Versions/'
 
 
-def get_pip_params(args):
-    """ Get known pip command-line parameters from argument object
-
-    Parameters
-    ----------
-    args : object
-        Arguments object returned from command line processing by argparse
-
-    Returns
-    -------
-    params : list
-        Command line parameters for pip
-    """
-    params = '--no-index' if args.no_index else []
-    for link in args.find_links:
-        params.append('--find-links=' + link)
-    return params
-
-
 def get_get_pip(get_pip_url, out_dir):
     """ Get ``get-pip.py`` from file or URL `get_pip_url`, write to `out_dir`
 
