@@ -27,14 +27,14 @@ def get_parser():
         epilog=
 """Make DMG installer from wheels
 
-* Collect source packages for pip, setuptools
-* Collect needed wheels using "pip wheel" command
-* Write directory to DMG containing source and wheel packages
-* Write "postinstall" script to install setuptools, pip, then install wheels
-* Write "postinstall" script in ".pkg" double click installer
-* Package result into DMG file.
+* Collect ``get-pip.py`` installer script;
+* Collect needed wheels using "pip wheel" command, including pip, setuptools;
+* Write directory to DMG containing wheel packages;
+* Write "postinstall" script to install pip, then install wheels;
+* Fold "postinstall" script into ".pkg" double click installer;
+* Package wheel directory and pkg installer into DMG file.
 
-There must be at least one REQ_SPEC or REQUIREMENT
+There must be at least one REQ_SPEC or REQUIREMENT.
 """,
         formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument('pkg_name', type=str, help='root name of installer')
