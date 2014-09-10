@@ -2,24 +2,36 @@
 """
 from __future__ import division, print_function
 
+from copy import copy
 from pip.req import InstallRequirement, RequirementSet, parse_requirements
 from pip.download import PipSession
 
 
-def recon_pip_args(args):
+def recon_pip_args(args, with_reqs=True):
     """ Reconstruct known pip command-line parameters from argument object
+
+    Positional arguments to command line found in ``args.req_specs``
+    (requirement specifiers).
 
     Parameters
     ----------
     args : object
         Arguments object returned from command line processing by argparse
+    with_reqs : bool, optional
+        If True, return pip arguments giving install requirements (positional
+        arguments in ``args.req_specs``, requirement files in
+        ``args.requirements``).  Otherwise, omit these.
 
     Returns
     -------
     params : list
         Command line parameters for pip
     """
-    params = []
+    if not with_reqs:
+        args = copy(args)
+        args.req_specs = None
+        args.requirement = None
+    params = [] if args.req_specs is None else list(args.req_specs)
     if not args.requirement is None:
         for requirement in args.requirement:
             params.append('--requirement=' + requirement)

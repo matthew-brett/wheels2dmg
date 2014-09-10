@@ -41,6 +41,7 @@ SCIPY_STATS_DATA_NAMES = SCIPY_STACK_NAMES + [
 def test_reconstruct_pip_args():
     # Function to reconstruct pip command line arguments
     class A():
+        req_specs = None
         requirement = None
         index_url = None
         extra_index_url = None
@@ -48,10 +49,15 @@ def test_reconstruct_pip_args():
         find_links = None
     args = A()
     assert_equal(recon_pip_args(args), [])
-    args.requirement = ()
+    args.req_specs = ()
     assert_equal(recon_pip_args(args), [])
+    args.req_specs = ['foot', 'barrel']
+    exp_params = ['foot', 'barrel']
+    assert_equal(recon_pip_args(args), exp_params)
+    args.requirement = ()
+    assert_equal(recon_pip_args(args), exp_params)
     args.requirement = ('file1.txt', 'file2.txt')
-    exp_params = ['--requirement=file1.txt', '--requirement=file2.txt']
+    exp_params += ['--requirement=file1.txt', '--requirement=file2.txt']
     assert_equal(recon_pip_args(args), exp_params)
     args.index_url = 'http://matthew.dynevor.org'
     exp_params.append('--index-url=http://matthew.dynevor.org')
@@ -74,6 +80,11 @@ def test_reconstruct_pip_args():
     args.find_links = link_urls
     exp_params += ['--find-links=' + u for u in link_urls]
     assert_equal(recon_pip_args(args), exp_params)
+    # No reqs argument removes req_specs, requirements
+    assert_equal(recon_pip_args(args, with_reqs=False), exp_params[4:])
+    # Doesn't modify original
+    assert_equal(recon_pip_args(args), exp_params)
+    assert_equal(recon_pip_args(args, with_reqs=True), exp_params)
 
 
 def test_parser_reconstruct_pip():
@@ -102,6 +113,7 @@ def test_parser_reconstruct_pip():
         (['-f', 'http://www.foo.com', '--find-links=http://bar.org'],
          ['--find-links=http://www.foo.com',
           '--find-links=http://bar.org'],),
+        (['foo', 'bar'],)
     ]:
         if len(in_out_args) == 1:
             in_args = in_out_args[0]
