@@ -1,7 +1,7 @@
 all: clean
 	./scripts/wheels2dmg scipy-stack 1.0 numpy scipy matplotlib ipython[notebook] \
 	    --get-pip-url=${HOME}/Downloads/get-pip.py --dmg-out-dir=dist \
-	    --dmg-in-dir=tmp
+	    --dmg-build-dir=tmp
 
 clean:
 	rm -rf dist tmp

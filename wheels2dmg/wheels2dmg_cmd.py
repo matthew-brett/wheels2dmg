@@ -46,7 +46,7 @@ There must be at least one REQ_SPEC or REQUIREMENT
     parser.add_argument('--get-pip-url', type=str, default=GET_PIP_URL,
                         help='URL or local path to "get-pip.py" (default is '
                         'to download from canonical URL')
-    parser.add_argument('--dmg-in-dir', type=str,
+    parser.add_argument('--dmg-build-dir', type=str,
                         help='Path to write dmg contents to (default is to '
                         'use a temporary directory)')
     parser.add_argument('--dmg-out-dir', type=str, default=os.getcwd(),
@@ -77,10 +77,10 @@ def main():
         return 1
     pip_params = recon_pip_args(args)
     dmg_out_dir = abspath(args.dmg_out_dir)
-    if args.dmg_in_dir is None:
+    if args.dmg_build_dir is None:
         ctx_mgr = InTemporaryDirectory
     else:
-        ctx_mgr = lambda : InGivenDirectory(args.dmg_in_dir)
+        ctx_mgr = lambda : InGivenDirectory(args.dmg_build_dir)
     with ctx_mgr():
         os.mkdir(PKG_SDIR)
         get_pip_path = get_get_pip(args.get_pip_url, PKG_SDIR)
