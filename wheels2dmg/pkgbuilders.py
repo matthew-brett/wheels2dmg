@@ -118,7 +118,7 @@ if not exists(python_path):
     sys.exit(20)
 # Install pip
 check_call([python_path, wheelhouse + '/get-pip.py', '-f', wheelhouse,
-            '--no-setuptools'])
+            '--no-index'])
 # Find pip
 expected_pip = python_bin + '/pip{py_version}'
 if not exists(expected_pip):
