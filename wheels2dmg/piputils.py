@@ -28,7 +28,7 @@ def recon_pip_args(args):
     if not args.extra_index_url is None:
         for extra_index_url in args.extra_index_url:
             params.append('--extra-index-url=' + extra_index_url)
-    if not args.no_index is None:
+    if args.no_index:
         params.append('--no-index')
     if not args.find_links is None:
         for link in args.find_links:

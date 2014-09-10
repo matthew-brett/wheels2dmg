@@ -37,15 +37,10 @@ def get_parser():
         formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument('pkg_name', type=str, help='root name of installer')
     parser.add_argument('pkg_version', type=str, help='version of installer')
-    parser.add_argument('requirements', type=str, nargs='+',
-                        help='pip requirement strings')
+    parser.add_argument('req_specs', type=str, nargs='*', default=[],
+                        help='pip requirement specifiers')
     parser.add_argument('--python-version',  type=str, default=PYTHON_VERSION,
                         help='Python version in major.minor format, e.g "3.4"')
-    parser.add_argument('--no-index',  action='store_true',
-                        help='disable search of pip indices when fetching '
-                        'packages to make installer')
-    parser.add_argument('--find-links', '-f', type=str, nargs='*', default=[],
-                        help='locations to find packages to make installer')
     parser.add_argument('--get-pip-url', type=str, default=GET_PIP_URL,
                         help='URL or local path to "get-pip.py" (default is '
                         'to download from canonical URL')
@@ -55,6 +50,18 @@ def get_parser():
     parser.add_argument('--dmg-out-dir', type=str, default=os.getcwd(),
                         help='Directory to which we write dmg disk image '
                         '(default is current directory)')
+    # The rest of the arguments are destined for pip wheel / install calls
+    parser.add_argument('--requirement', '-r', type=str, action='append',
+                        help='pip requirement file(s)')
+    parser.add_argument('--index-url', '-i', type=str,
+                        help='base URL of Python index (see pip install)')
+    parser.add_argument('--extra-index-url', type=str, action='append',
+                        help='extra URLs of Python indices (see pip)')
+    parser.add_argument('--no-index',  action='store_true',
+                        help='disable search of pip indices when fetching '
+                        'packages to make installer')
+    parser.add_argument('--find-links', '-f', type=str, action='append',
+                        help='locations to find packages to make installer')
     return parser
 
 
