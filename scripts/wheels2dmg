@@ -1,8 +1,6 @@
 #!python
 """ Make dmg installer for Python.org Python from Python wheels """
-import sys
-
 from wheels2dmg.wheels2dmg_cmd import main
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

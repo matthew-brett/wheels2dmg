@@ -2,6 +2,7 @@
 """
 from __future__ import division, print_function
 
+import sys
 import os
 from os.path import abspath
 from subprocess import check_call
@@ -80,7 +81,7 @@ def main():
     # We need at least one requirement
     if len(req_params) == 0:
         parser.print_help()
-        return 1
+        sys.exit(12)
     if not args.template_dir is None:
         insert_template_path(args.template_dir)
     dmg_out_dir = abspath(args.dmg_out_dir)
