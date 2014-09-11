@@ -21,7 +21,7 @@ JINJA_ENV = Environment(loader=JINJA_LOADER, trim_blocks=True)
 from .tmpdirs import TemporaryDirectory
 
 # Installed location of Python.org Python
-PY_ORG_BASE='/Library/Frameworks/Python.framework/Versions/'
+PY_ORG_BASE='/Library/Frameworks/Python.framework/Versions'
 
 
 def get_get_pip(get_pip_url, out_dir):
@@ -103,56 +103,49 @@ def write_requires(requirement_strings,
     return out_fname
 
 
-def write_post(py_version, requirements, pkg_sdir, scripts_dir):
-    to_install = ', '.join(['"{0}"'.format(r) for r in requirements])
-    fname = pjoin(scripts_dir, 'postinstall')
-    with open(fname, 'wt') as fobj:
-        fobj.write(
-r"""#!/usr/bin/env python
-# Install into Python.org python
-import sys
-import os
-from os.path import exists, dirname
-from subprocess import check_call
+def write_post(py_version,
+               out_dir,
+               pkg_name_version,
+               pkg_sdir='packages',
+               template_fname='postinstall'):
+    """ Write ``postinstall`` file
 
-# Find disk image files
-package_path = os.environ.get('PACKAGE_PATH')
-if package_path is None:
-    sys.exit(10)
-package_dir = dirname(package_path)
-wheelhouse = package_dir + '/{pkg_sdir}'
-# Find Python.org Python
-python_bin = '{py_org_base}/{py_version}/bin'
-python_path = python_bin +  '/python{py_version}'
-if not exists(python_path):
-    sys.exit(20)
-# Install pip
-check_call([python_path, wheelhouse + '/get-pip.py', '-f', wheelhouse,
-            '--no-index'])
-# Find pip
-expected_pip = python_bin + '/pip{py_version}'
-if not exists(expected_pip):
-    sys.exit(30)
-pip_cmd = [expected_pip, 'install', '--no-index', '--upgrade',
-           '--find-links', wheelhouse]
-check_call(pip_cmd + [{to_install}])
-""".format(py_org_base = PY_ORG_BASE,
-           py_version = py_version,
-           to_install = to_install,
-           pkg_sdir = pkg_sdir,
-          ))
-    check_call(['chmod', 'a+x', fname])
+    Parameters
+    ----------
+    py_version : str
+        Python major.minor version e.g. ``3.4``
+    pkg_name_version : str
+        Package name plus version
+    out_dir : str
+        Directory to which to write file
+    pkg_sdir  : str, optional
+        Subdirector relative to ``$PACKAGE_PATH`` containing wheels
+    template_fname : str, optional
+        Name of jinja2 template
+    """
+    out_fname = pjoin(out_dir, 'postinstall')
+    template = JINJA_ENV.get_template(template_fname)
+    with open(out_fname, 'wt') as fobj:
+        fobj.write(template.render(
+            py_version = py_version,
+            pkg_name_version = pkg_name_version,
+            pkg_sdir = pkg_sdir,
+            py_org_base = PY_ORG_BASE))
+    check_call(['chmod', 'a+x', out_fname])
+    return out_fname
 
 
-def write_pkg(py_version, requirements, out_dir, pkg_sdir, identifier, version):
+def write_pkg(py_version, out_dir, pkg_sdir, identifier, version):
     out_dir = abspath(out_dir)
+    pkg_name_version =  '{0}-{1}'.format(identifier, version)
     with TemporaryDirectory() as scripts:
-        write_post(py_version, requirements, pkg_sdir, scripts)
-        pkg_fname = pjoin(out_dir, '{0}-{1}.pkg'.format(identifier, version))
+        write_post(py_version, scripts, pkg_name_version, pkg_sdir)
+        pkg_fname = pjoin(out_dir, pkg_name_version + '.pkg')
         check_call(['pkgbuild',
                     '--nopayload',
                     '--scripts', scripts,
-                    '--identifier', identifier, '--version', version,
+                    '--identifier', identifier,
+                    '--version', version,
                     pkg_fname])
     return pkg_fname
 

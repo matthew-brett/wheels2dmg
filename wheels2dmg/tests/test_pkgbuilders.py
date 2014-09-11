@@ -3,7 +3,7 @@
 
 from os.path import basename, abspath, expanduser, relpath, join as pjoin
 
-from ..pkgbuilders import get_get_pip, write_requires
+from ..pkgbuilders import get_get_pip, write_requires, write_post
 
 from ..tmpdirs import TemporaryDirectory
 
@@ -72,3 +72,43 @@ bar
 baf==1.0
 whack<2.1
 """)
+
+
+def test_write_post():
+    # Test write_post function
+    with TemporaryDirectory() as tmpdir:
+        exp_out = pjoin(tmpdir, 'postinstall')
+        assert_equal(write_post('3.4', tmpdir, 'test-1', 'pkgs'), exp_out)
+        assert_file_equal_string(exp_out,
+"""#!/usr/bin/env python
+# Install into Python.org python
+# vim ft:python
+import sys
+import os
+from os.path import exists, dirname
+from subprocess import check_call
+
+# Find disk image files
+package_path = os.environ.get('PACKAGE_PATH')
+if package_path is None:
+    sys.exit(10)
+package_dir = dirname(package_path)
+wheelhouse = package_dir + '/pkgs'
+# Find Python.org Python
+python_bin = '/Library/Frameworks/Python.framework/Versions/3.4/bin'
+python_path = python_bin +  '/python3.4'
+if not exists(python_path):
+    sys.exit(20)
+# Install pip
+check_call([python_path,
+            wheelhouse + '/get-pip.py',
+            '-f', wheelhouse,
+            '--no-index'])
+# Find pip
+expected_pip = python_bin + '/pip3.4'
+if not exists(expected_pip):
+    sys.exit(30)
+check_call([expected_pip, 'install',
+            '--no-index', '--upgrade',
+            '--find-links', wheelhouse,
+            '-r', wheelhouse + '/test-1.txt'])""")

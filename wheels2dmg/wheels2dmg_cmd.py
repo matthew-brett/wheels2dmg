@@ -8,7 +8,8 @@ from subprocess import check_call
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
 from .piputils import recon_pip_args, get_requirements, get_req_strings
-from .pkgbuilders import (get_get_pip, upgrade_pip, write_pkg, write_dmg)
+from .pkgbuilders import (get_get_pip, upgrade_pip, write_pkg, write_dmg,
+                          write_requires)
 from .tmpdirs import (InGivenDirectory, InTemporaryDirectory)
 
 # Defaults
@@ -78,6 +79,7 @@ def main():
         parser.print_help()
         return 1
     dmg_out_dir = abspath(args.dmg_out_dir)
+    pkg_name_version = '{0.pkg_name}-{0.pkg_version}'.format(args)
     if args.dmg_build_dir is None:
         ctx_mgr = InTemporaryDirectory
     else:
@@ -92,9 +94,16 @@ def main():
                    req_params + fetch_params)
         # Analyze the pip requirements
         reqs = get_requirements(args.req_specs, args.requirement)
+        # Write requirements file
+        write_requires(get_req_strings(reqs),
+                       pkg_name_version,
+                       PKG_SDIR)
         # Write scripts only installer
-        write_pkg(args.python_version, get_req_strings(reqs),
-                  '.', PKG_SDIR, args.pkg_name, args.pkg_version)
+        write_pkg(args.python_version,
+                  '.',
+                  PKG_SDIR,
+                  args.pkg_name,
+                  args.pkg_version)
         # Write packages and installer to dmg
         write_dmg('.', dmg_out_dir,
                   args.pkg_name, args.python_version, args.pkg_version)
