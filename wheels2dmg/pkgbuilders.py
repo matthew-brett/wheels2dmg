@@ -160,3 +160,29 @@ def write_dmg(dmg_in_dir, dmg_out_dir, identifier, py_version, pkg_version):
     dmg_fname = pjoin(dmg_out_dir, dmg_name + '.dmg')
     check_call(['hdiutil', 'create', '-srcfolder', dmg_in_dir,
                 '-volname', dmg_name, dmg_fname])
+
+
+def insert_template_path(path):
+    """ Insert new path into jinja environment global
+
+    Parameters
+    ----------
+    path : str
+        Path to insert at beginning of template search order
+    """
+    JINJA_ENV.cache.clear()
+    JINJA_LOADER.searchpath.insert(0, path)
+
+
+def pop_template_path():
+    """ Remove first path from jinja environment global
+
+    Usually this is after using :func:`insert_templat_path`
+    """
+    JINJA_LOADER.searchpath.pop(0)
+    JINJA_ENV.cache.clear()
+
+
+def get_template(*args, **kwargs):
+    """ Get template from jinja environment global """
+    return JINJA_ENV.get_template(*args, **kwargs)

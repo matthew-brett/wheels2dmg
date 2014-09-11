@@ -1,9 +1,12 @@
 """ Testing pkgbuilders module
 """
 
-from os.path import basename, abspath, expanduser, relpath, join as pjoin
+from os.path import (basename, dirname, abspath, expanduser, relpath,
+                     join as pjoin)
 
-from ..pkgbuilders import get_get_pip, write_requires, write_post
+from ..pkgbuilders import (get_get_pip, write_requires, write_post,
+                           insert_template_path, pop_template_path,
+                           get_template)
 
 from ..tmpdirs import TemporaryDirectory
 
@@ -112,3 +115,24 @@ check_call([expected_pip, 'install',
             '--no-index', '--upgrade',
             '--find-links', wheelhouse,
             '-r', wheelhouse + '/test-1.txt'])""")
+
+
+def test_template_override():
+    # Check that we can override a template
+    original_fname = abspath(pjoin(
+        dirname(__file__), '..', 'templates', 'requirements.txt'))
+    with TemporaryDirectory() as tmpdir:
+        new_fname = pjoin(tmpdir, 'requirements.txt')
+        with open(new_fname, 'wt') as fobj:
+            fobj.write('Nothing much')
+        tpl = get_template('requirements.txt')
+        assert_equal(tpl.filename, original_fname)
+        insert_template_path(tmpdir)
+        try:
+            tpl = get_template('requirements.txt')
+            assert_equal(tpl.filename, new_fname)
+            assert_file_equal_string(new_fname, tpl.render())
+        finally:
+            pop_template_path()
+        tpl = get_template('requirements.txt')
+        assert_equal(tpl.filename, original_fname)
