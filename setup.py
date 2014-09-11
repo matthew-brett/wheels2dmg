@@ -31,9 +31,10 @@ setup(name='wheels2dmg',
       author_email='matthew.brett@gmail.com',
       url='http://github.com/matthew-brett/wheels2dmg',
       packages=['wheels2dmg', 'wheels2dmg.tests'],
-      package_data = {'wheels2dmg.tests':
-                      [pjoin('data', '*.txt'),
-                      ]},
+      package_data = {
+          'wheels2dmg': [pjoin('templates', '*')],
+          'wheels2dmg.tests': [pjoin('data', '*.txt')],
+      },
       scripts = [pjoin('scripts', f) for f in (
           'wheels2dmg',
       )],

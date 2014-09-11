@@ -3,7 +3,7 @@
 from __future__ import division, print_function
 
 import os
-from os.path import exists, join as pjoin, abspath, expanduser
+from os.path import exists, join as pjoin, abspath, expanduser, dirname
 import shutil
 from subprocess import check_call
 try:
@@ -13,6 +13,10 @@ except ImportError:
     from urllib.request import urlopen # Python 3
     from urllib.parse import urlparse
 
+from jinja2 import Environment, FileSystemLoader
+
+JINJA_LOADER = FileSystemLoader(pjoin(dirname(__file__), 'templates'))
+JINJA_ENV = Environment(loader=JINJA_LOADER, trim_blocks=True)
 
 from .tmpdirs import TemporaryDirectory
 
@@ -67,6 +71,36 @@ def upgrade_pip(get_pip_path, py_version, pip_params):
     # Install wheel
     check_call([pip_exe, 'install', '--upgrade'] + pip_params + ['wheel'])
     return pip_exe
+
+
+def write_requires(requirement_strings,
+                   pkg_name_version,
+                   out_dir,
+                   template_fname = 'requirements.txt'):
+    """ Write a pip requirements file with given requirements
+
+    Parameters
+    ----------
+    requirement_strings : sequence
+        List of strings to be written as lines to requirement file
+    pkg_name_version : str
+        Package name combined with version string.  Will be used to form output
+        file name
+    out_dir : str
+        Directory to which to write requirements file
+    template_fname : str, optional
+        Template filename, to be fetched from the global ``JINJA_LOADER``
+
+    Returns
+    -------
+    out_fname : str
+        Full path to written file
+    """
+    out_fname = pjoin(out_dir, pkg_name_version + '.txt')
+    template = JINJA_ENV.get_template(template_fname)
+    with open(out_fname, 'wt') as fobj:
+        fobj.write(template.render(**locals()))
+    return out_fname
 
 
 def write_post(py_version, requirements, pkg_sdir, scripts_dir):
