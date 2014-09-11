@@ -9,7 +9,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
 from .piputils import recon_pip_args, get_requirements, get_req_strings
 from .pkgbuilders import (get_get_pip, upgrade_pip, write_pkg, write_dmg,
-                          write_requires)
+                          write_requires, insert_template_path)
 from .tmpdirs import (InGivenDirectory, InTemporaryDirectory)
 
 # Defaults
@@ -53,6 +53,9 @@ There must be at least one REQ_SPEC or REQUIREMENT.
     parser.add_argument('--dmg-out-dir', type=str, default=os.getcwd(),
                         help='Directory to which we write dmg disk image '
                         '(default is current directory)')
+    parser.add_argument('--template-dir', type=str,
+                        help='Althernative directory containing jinja '
+                        'templates for installer files')
     # The rest of the arguments are destined for pip wheel / install calls
     parser.add_argument('--requirement', '-r', type=str, action='append',
                         help='pip requirement file(s)', metavar='REQUIREMENT')
@@ -78,6 +81,8 @@ def main():
     if len(req_params) == 0:
         parser.print_help()
         return 1
+    if not args.template_dir is None:
+        insert_template_path(args.template_dir)
     dmg_out_dir = abspath(args.dmg_out_dir)
     pkg_name_version = '{0.pkg_name}-{0.pkg_version}'.format(args)
     if args.dmg_build_dir is None:
