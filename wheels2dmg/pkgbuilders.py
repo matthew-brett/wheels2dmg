@@ -304,6 +304,7 @@ class PkgWriter(object):
         webloc_fname = pjoin(self.dmg_build_dir, froot)
         with open(webloc_fname, 'wt') as fobj:
             fobj.write(template.render(info = self))
+        check_call(['SetFile', '-a', 'E', webloc_fname])
         return webloc_fname
 
     def write_component_pkg(self):
