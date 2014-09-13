@@ -4,9 +4,9 @@
 from os.path import (basename, dirname, abspath, expanduser, relpath,
                      join as pjoin)
 
-from ..pkgbuilders import (get_get_pip, write_requires, write_post,
-                           insert_template_path, pop_template_path,
-                           get_template)
+from ..pkgbuilders import (get_get_pip, insert_template_path,
+                           pop_template_path, get_template,
+                           PkgWriter)
 
 from ..tmpdirs import TemporaryDirectory
 
@@ -46,12 +46,12 @@ def test_get_get_pip():
         assert_file_equal(__file__, gpp)
 
 
-def test_write_require():
+def test_write_requires():
     # Test write_require function
-    with TemporaryDirectory() as tmpdir:
-        exp_out = pjoin(tmpdir, 'test-1.txt')
-        assert_equal(write_requires(['foo', 'bar'], 'test-1', tmpdir), exp_out)
-        assert_file_equal_string(exp_out,
+    pkg_writer = PkgWriter('test', '1', '2.7', ['foo', 'bar'])
+    exp_out = pjoin(pkg_writer.wheel_build_dir, 'test-1.txt')
+    assert_equal(pkg_writer.write_requires(), exp_out)
+    assert_file_equal_string(exp_out,
 """# Requirements file for test-1
 #
 # Use with:
@@ -61,11 +61,10 @@ def test_write_require():
 foo
 bar
 """)
-        exp_out = pjoin(tmpdir, 'another-2.0.txt')
-        assert_equal(
-            write_requires(['baf==1.0', 'whack<2.1'], 'another-2.0', tmpdir),
-            exp_out)
-        assert_file_equal_string(exp_out,
+    pkg_writer = PkgWriter('another', '2.0', '3.4', ['baf==1.0', 'whack<2.1'])
+    exp_out = pjoin(pkg_writer.wheel_build_dir, 'another-2.0.txt')
+    assert_equal(pkg_writer.write_requires(), exp_out)
+    assert_file_equal_string(exp_out,
 """# Requirements file for another-2.0
 #
 # Use with:
@@ -79,9 +78,11 @@ whack<2.1
 
 def test_write_post():
     # Test write_post function
+    pkg_writer = PkgWriter('test', '1', '3.4', ['foo', 'bar'],
+                           wheel_sdir = 'pkgs')
     with TemporaryDirectory() as tmpdir:
         exp_out = pjoin(tmpdir, 'postinstall')
-        assert_equal(write_post('3.4', tmpdir, 'test-1', 'pkgs'), exp_out)
+        assert_equal(pkg_writer.write_post(tmpdir), exp_out)
         assert_file_equal_string(exp_out,
 """#!/usr/bin/env python
 # Install into Python.org python
@@ -99,7 +100,7 @@ package_dir = dirname(package_path)
 wheelhouse = package_dir + '/pkgs'
 # Find Python.org Python
 python_bin = '/Library/Frameworks/Python.framework/Versions/3.4/bin'
-python_path = python_bin +  '/python3.4'
+python_path = python_bin + '/python3.4'
 if not exists(python_path):
     sys.exit(20)
 # Install pip

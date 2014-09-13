@@ -161,7 +161,7 @@ class PkgWriter(object):
     def get_requirement_strings(self, with_specs=True):
         args = self.pip_parser.parse_args(self.pip_params)
         req_set = get_requirements(args.req_specs, args.requirement)
-        return sorted(get_req_strings(req_set, with_specs))
+        return get_req_strings(req_set, with_specs)
 
     def get_wheels(self):
         wheelhouse = _safe_mkdirs(self.wheel_build_dir)
@@ -180,12 +180,18 @@ class PkgWriter(object):
 
     def write_requires(self):
         """ Write a pip requirements file with given requirements
+
+        Returns
+        -------
+        requires_fname : str
+            Filename of written requirements file
         """
-        out_fname = pjoin(_safe_mkdirs(self.wheel_build_dir),
-                          self.pkg_name_version + '.txt')
+        requires_fname = pjoin(_safe_mkdirs(self.wheel_build_dir),
+                               self.pkg_name_version + '.txt')
         template = get_template('requirements.txt')
-        with open(out_fname, 'wt') as fobj:
+        with open(requires_fname, 'wt') as fobj:
             fobj.write(template.render(info = self))
+        return requires_fname
 
     def write_wheelhouse(self):
         self.get_wheels()
@@ -198,12 +204,18 @@ class PkgWriter(object):
         ----------
         out_dir : str
             Directory to which to write file
+
+        Returns
+        -------
+        post_fname : str
+            Filename of written file
         """
-        out_fname = pjoin(out_dir, 'postinstall')
+        post_fname = pjoin(out_dir, 'postinstall')
         template = get_template('postinstall')
-        with open(out_fname, 'wt') as fobj:
+        with open(post_fname, 'wt') as fobj:
             fobj.write(template.render(info = self))
-        check_call(['chmod', 'a+x', out_fname])
+        check_call(['chmod', 'a+x', post_fname])
+        return post_fname
 
     def write_component_pkg(self):
         """ Write component package to install wheels
