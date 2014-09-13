@@ -296,6 +296,16 @@ class PkgWriter(object):
         check_call(['chmod', 'a+x', post_fname])
         return post_fname
 
+    def write_webloc(self):
+        """ Write webloc link to Python installer
+        """
+        template = get_template('first_install_python.webloc')
+        froot = 'Install Python {0}.webloc'.format(self.pyv_m_m)
+        webloc_fname = pjoin(self.dmg_build_dir, froot)
+        with open(webloc_fname, 'wt') as fobj:
+            fobj.write(template.render(info = self))
+        return webloc_fname
+
     def write_component_pkg(self):
         """ Write component package to install wheels
 
@@ -319,6 +329,8 @@ class PkgWriter(object):
         return pkg_fname
 
     def write_distribution(self):
+        """ Write Distribution XML for product archive
+        """
         template = get_template('Distribution')
         out_fname = pjoin(self.scratch_dir, 'Distribution')
         with open(out_fname, 'wt') as fobj:
@@ -357,6 +369,7 @@ class PkgWriter(object):
                     product_fname])
 
     def write_dmg(self, out_path):
+        self.write_webloc()
         self.write_wheelhouse()
         self.write_product_archive()
         dmg_fname = pjoin(out_path, self.pkg_name_pyv_version + '.dmg')
