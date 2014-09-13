@@ -20,7 +20,7 @@ versioneer.parentdir_prefix = 'wheels2dmg-'
 
 setuptools_args = {}
 if 'setuptools' in sys.modules:
-    setuptools_args['install_requires'] = ['jinja']
+    setuptools_args['install_requires'] = ['jinja2', 'wheel']
 
 setup(name='wheels2dmg',
       version=versioneer.get_version(),
