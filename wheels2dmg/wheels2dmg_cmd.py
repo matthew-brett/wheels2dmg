@@ -6,7 +6,7 @@ import sys
 import os
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
-from .piputils import recon_pip_args, get_requirements
+from .piputils import make_pip_parser, recon_pip_args, get_requirements
 from .pkgbuilders import (insert_template_path, PkgWriter)
 
 # Defaults
@@ -32,8 +32,6 @@ There must be at least one REQ_SPEC or REQUIREMENT.
         formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument('pkg_name', type=str, help='root name of installer')
     parser.add_argument('pkg_version', type=str, help='version of installer')
-    parser.add_argument('req_specs', type=str, nargs='*', default=[],
-                        help='pip requirement specifiers', metavar='REQ_SPEC')
     parser.add_argument('--python-version',  type=str, default=PYTHON_VERSION,
                         help='Python version in major.minor format, e.g "3.4"')
     parser.add_argument('--get-pip-url', type=str,
@@ -54,19 +52,7 @@ There must be at least one REQ_SPEC or REQUIREMENT.
     parser.add_argument('--pkg-id-root', type=str,
                         help='Package id root for installing package receipt '
                         '(default is "com.github.MacPython")')
-    # The rest of the arguments are destined for pip wheel / install calls
-    parser.add_argument('--requirement', '-r', type=str, action='append',
-                        help='pip requirement file(s)', metavar='REQUIREMENT')
-    parser.add_argument('--index-url', '-i', type=str,
-                        help='base URL of Python index (see pip install)')
-    parser.add_argument('--extra-index-url', type=str, action='append',
-                        help='extra URLs of Python indices (see pip)')
-    parser.add_argument('--no-index',  action='store_true',
-                        help='disable search of pip indices when fetching '
-                        'packages to make installer')
-    parser.add_argument('--find-links', '-f', type=str, action='append',
-                        help='locations to find packages to make installer')
-    return parser
+    return make_pip_parser(parser)
 
 
 def main():
