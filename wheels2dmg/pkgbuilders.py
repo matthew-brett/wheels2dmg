@@ -219,12 +219,28 @@ class PkgWriter(object):
         return tuple(name for name in self.chatty_names
                      if not get_template(name) is None)
 
-    def get_requirement_strings(self, with_specs=True):
+    def get_requirement_strings(self, extras=True, versions=True):
+        """ Return list of requirement strings for requirements in `self`
+
+        Parameters
+        ----------
+        extras : bool, optional
+            If True, append extras specifications to requirement name
+        versions : bool, optional
+            If True, append version specifications to requirement name
+
+        Returns
+        -------
+        req_strings : list
+            list of string corresponding to the requirements `self`
+        """
         args = self.pip_parser.parse_args(self.pip_params)
         req_set = get_requirements(args.req_specs, args.requirement)
-        return get_req_strings(req_set, with_specs)
+        return get_req_strings(req_set, extras, versions)
 
     def get_wheels(self):
+        """ Upgrade pip and get wheels for this install
+        """
         wheelhouse = _safe_mkdirs(self.wheel_build_dir)
         # Get get-pip.py
         get_pip_path = get_get_pip(self.get_pip_url, wheelhouse)
@@ -255,6 +271,8 @@ class PkgWriter(object):
         return requires_fname
 
     def write_wheelhouse(self):
+        """ Write wheels, requirements into wheelhouse directory
+        """
         self.get_wheels()
         self.write_requires()
 

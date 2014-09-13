@@ -58,6 +58,25 @@ def test_py_version_strings():
         assert_raises(ValueError, PkgWriter, 'test', '1', ver, ['foo', 'bar'])
 
 
+def test_get_requirement_strings():
+    # Test extras and versions parameters to get_req_strings
+    def assert_pkg_reqs_equal(pip_args, expected, *args, **kwargs):
+        pkg_writer = PkgWriter('test', '1', '2.7.1', pip_args)
+        reqs = pkg_writer.get_requirement_strings(*args, **kwargs)
+        assert_equal(reqs, expected)
+
+    assert_pkg_reqs_equal(['one'], ['one'])
+    assert_pkg_reqs_equal(['one'], ['one'], False, False)
+    assert_pkg_reqs_equal(['one', 'two==1.2'], ['one', 'two==1.2'], False)
+    assert_pkg_reqs_equal(['one', 'two==1.2'], ['one', 'two'], False, False)
+    assert_pkg_reqs_equal(['one[an_extra]', 'two==1.2'],
+                          ['one', 'two==1.2'], False, True)
+    assert_pkg_reqs_equal(['one[an_extra]', 'two==1.2'],
+                          ['one[an_extra]', 'two'], True, False)
+    assert_pkg_reqs_equal(['one[an_extra]', 'two==1.2'],
+                          ['one', 'two'], False, False)
+
+
 def test_write_requires():
     # Test write_require function
     pkg_writer = PkgWriter('test', '1', '2.7.1', ['foo', 'bar'])

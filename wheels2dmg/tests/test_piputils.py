@@ -123,8 +123,8 @@ def test_parser_reconstruct_pip():
             assert_equal(sum(recon_pip_args(parsed), []), out_args)
 
 
-def assert_names_equal(req_set, names):
-    assert_equal(names, get_req_strings(req_set))
+def assert_names_equal(req_set, names, *args, **kwargs):
+    assert_equal(names, get_req_strings(req_set, *args, **kwargs))
 
 
 def test_get_requirements():
@@ -136,6 +136,11 @@ def test_get_requirements():
     assert_names_equal(get_requirements(['one']), ['one'])
     assert_names_equal(get_requirements(['one', 'two==1.2']),
                        ['one', 'two==1.2'])
+    assert_names_equal(get_requirements(['one[an_extra]', 'two==1.2']),
+                       ['one[an_extra]', 'two==1.2'])
+    assert_names_equal(
+        get_requirements(['one[an_extra,another]', 'two==1.2']),
+                       ['one[an_extra,another]', 'two==1.2'])
     assert_names_equal(get_requirements(['one', 'two==1.2,<1.3']),
                        ['one', 'two==1.2,<1.3'])
     sps_file = pjoin(DATA_PATH, 'scipy-stack-1.0-plus.txt')
@@ -163,3 +168,19 @@ Pillow
 """.format(sps_file))
         assert_names_equal(get_requirements([], ['more_required.txt']),
                             SCIPY_STATS_DATA_NAMES)
+
+
+def test_get_req_strings():
+    # Test extras and versions parameters to get_req_strings
+    assert_names_equal(get_requirements(['one']), ['one'])
+    assert_names_equal(get_requirements(['one']), ['one'], False, False)
+    assert_names_equal(get_requirements(['one', 'two==1.2']),
+                       ['one', 'two==1.2'], False)
+    assert_names_equal(get_requirements(['one', 'two==1.2']),
+                       ['one', 'two'], False, False)
+    assert_names_equal(get_requirements(['one[an_extra]', 'two==1.2']),
+                       ['one', 'two==1.2'], False, True)
+    assert_names_equal(get_requirements(['one[an_extra]', 'two==1.2']),
+                       ['one[an_extra]', 'two'], True, False)
+    assert_names_equal(get_requirements(['one[an_extra]', 'two==1.2']),
+                       ['one', 'two'], False, False)

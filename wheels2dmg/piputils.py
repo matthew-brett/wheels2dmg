@@ -112,14 +112,16 @@ def get_requirements(req_specs, requirement_files=None):
     return requirement_set
 
 
-def get_req_strings(req_set, with_specs=True):
+def get_req_strings(req_set, extras=True, versions=True):
     """ Get requirement strings from a RequirementSet
 
     Parameters
     ----------
     req_set : RequirementSet instance
-    with_specs : bool, optional
-        If True, append specified version spec strings
+    extras : bool, optional
+        If True, append extras specifications to requirement name
+    versions : bool, optional
+        If True, append version specifications to requirement name
 
     Returns
     -------
@@ -131,9 +133,9 @@ def get_req_strings(req_set, with_specs=True):
     for name in reqs.keys():
         req = reqs[name]
         req_str = req.name
-        if req.extras:
+        if extras and req.extras:
             req_str += '[{0}]'.format(','.join(req.extras))
-        if with_specs and req.req.specs:
+        if versions and req.req.specs:
             req_str += ','.join([''.join(s) for s in req.req.specs])
         req_strings.append(req_str)
     return req_strings

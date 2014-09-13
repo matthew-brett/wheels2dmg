@@ -8,7 +8,7 @@
 Please see the license information for each package we install:
 
 <ul>
-{% for item in info.get_requirement_strings(False) %}
+{% for item in info.get_requirement_strings(False, False) %}
     <li><a href="http://pypi.python.org/pypi/{{ item }}">
         {{ item }}</a></li>
 {% endfor %}
