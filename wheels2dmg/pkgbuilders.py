@@ -14,7 +14,7 @@ except ImportError:
     from urllib.parse import urlparse
 from tempfile import mkdtemp
 
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
 from .piputils import (make_pip_parser, recon_pip_args, get_requirements,
                        get_req_strings)
@@ -89,6 +89,7 @@ class PkgWriter(object):
 
     py_org_base = PY_ORG_BASE
     pip_parser = make_pip_parser()
+    chatty_names = ('welcome.html', 'readme.html', 'license.html')
 
     def __init__(self,
                  pkg_name,
@@ -157,6 +158,11 @@ class PkgWriter(object):
     @property
     def wheel_build_dir(self):
         return pjoin(self.dmg_build_dir, self.wheel_sdir)
+
+    @property
+    def existing_chatty_names(self):
+        return tuple(name for name in self.chatty_names
+                     if not get_template(name) is None)
 
     def get_requirement_strings(self, with_specs=True):
         args = self.pip_parser.parse_args(self.pip_params)
@@ -247,13 +253,20 @@ class PkgWriter(object):
         return out_fname
 
     def write_resources(self):
+        """ Write contents of resources directory
+
+        Returns
+        -------
+        resources : str
+            Path of resources directory
+        """
         resources = pjoin(self.scratch_dir, 'resources')
         en_resources = pjoin(resources, 'en.lproj')
         _safe_mkdirs(en_resources)
-        for fbase in ('welcome.html', 'readme.html', 'license.html'):
-            out_fname = pjoin(en_resources, fbase)
+        for name in self.existing_chatty_names:
+            out_fname = pjoin(en_resources, name)
             with open(out_fname, 'wt') as fobj:
-                fobj.write(get_template(fbase).render(info = self))
+                fobj.write(get_template(name).render(info = self))
         return resources
 
     def write_product_archive(self):
@@ -303,5 +316,11 @@ def pop_template_path():
 
 
 def get_template(*args, **kwargs):
-    """ Get template from jinja environment global """
-    return JINJA_ENV.get_template(*args, **kwargs)
+    """ Get template from jinja environment global
+
+    Return None if template not found
+    """
+    try:
+        return JINJA_ENV.get_template(*args, **kwargs)
+    except TemplateNotFound:
+        return None

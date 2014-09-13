@@ -13,6 +13,8 @@ from ..tmpdirs import TemporaryDirectory
 from nose.tools import (assert_true, assert_false, assert_raises,
                         assert_equal, assert_not_equal)
 
+TEMPLATE_PATH = abspath(pjoin(dirname(__file__), '..', 'templates'))
+
 
 def assert_file_equal(file1, file2):
     with open(file1, 'rb') as fobj:
@@ -118,10 +120,16 @@ check_call([expected_pip, 'install',
             '-r', wheelhouse + '/test-1.txt'])""")
 
 
+def test_chatty_names():
+    # Test existing chatty names property
+    pkg_writer = PkgWriter('test', '1', '3.4', ['foo', 'bar'])
+    assert_equal(pkg_writer.existing_chatty_names,
+                 ('welcome.html', 'license.html'))
+
+
 def test_template_override():
     # Check that we can override a template
-    original_fname = abspath(pjoin(
-        dirname(__file__), '..', 'templates', 'requirements.txt'))
+    original_fname = pjoin(TEMPLATE_PATH, 'requirements.txt')
     with TemporaryDirectory() as tmpdir:
         new_fname = pjoin(tmpdir, 'requirements.txt')
         with open(new_fname, 'wt') as fobj:
@@ -137,3 +145,9 @@ def test_template_override():
             pop_template_path()
         tpl = get_template('requirements.txt')
         assert_equal(tpl.filename, original_fname)
+
+
+def test_get_template():
+    tpl_fname = pjoin(TEMPLATE_PATH, 'requirements.txt')
+    assert_equal(get_template('requirements.txt').filename, tpl_fname)
+    assert_equal(get_template('unlikely_name.foo'), None)
