@@ -6,7 +6,7 @@ import sys
 import os
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
-from .piputils import make_pip_parser, recon_pip_args, get_requirements
+from .piputils import make_pip_parser, recon_pip_args
 from .pkgbuilders import (insert_template_path, PkgWriter)
 
 # Defaults
@@ -67,13 +67,10 @@ def main():
         sys.exit(12)
     if not args.template_dir is None:
         insert_template_path(args.template_dir)
-    reqs = get_requirements(args.req_specs, args.requirement)
     pkg_writer = PkgWriter(args.pkg_name,
                            args.pkg_version,
                            args.python_version,
-                           reqs,
-                           req_params,
-                           fetch_params,
+                           req_params + fetch_params,
                            args.get_pip_url,
                            args.dmg_build_dir,
                            args.scratch_dir,

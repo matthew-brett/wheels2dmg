@@ -16,7 +16,8 @@ from tempfile import mkdtemp
 
 from jinja2 import Environment, FileSystemLoader
 
-from .piputils import get_req_strings
+from .piputils import (make_pip_parser, recon_pip_args, get_requirements,
+                       get_req_strings)
 
 JINJA_LOADER = FileSystemLoader(pjoin(dirname(__file__), 'templates'))
 JINJA_ENV = Environment(loader=JINJA_LOADER, trim_blocks=True)
@@ -87,14 +88,13 @@ def _safe_mkdirs(path):
 class PkgWriter(object):
 
     py_org_base = PY_ORG_BASE
+    pip_parser = make_pip_parser()
 
     def __init__(self,
                  pkg_name,
                  pkg_version,
                  py_version,
-                 requirements,
-                 pip_req_params,
-                 pip_fetch_params,
+                 pip_params,
                  get_pip_url = None,
                  dmg_build_dir = None,
                  scratch_dir = None,
@@ -106,9 +106,7 @@ class PkgWriter(object):
         self.pkg_name = pkg_name
         self.pkg_version = pkg_version
         self.py_version = py_version
-        self.requirements = requirements
-        self.pip_req_params = pip_req_params
-        self.pip_fetch_params = pip_fetch_params
+        self.pip_params = pip_params
         self.get_pip_url = GET_PIP_URL if get_pip_url is None else get_pip_url
         self.dmg_build_dir = self._working_dir(dmg_build_dir)
         self.scratch_dir = self._working_dir(scratch_dir)
@@ -161,22 +159,24 @@ class PkgWriter(object):
         return pjoin(self.dmg_build_dir, self.wheel_sdir)
 
     def get_requirement_strings(self, with_specs=True):
-        return sorted(get_req_strings(
-            self.requirements, with_specs))
+        args = self.pip_parser.parse_args(self.pip_params)
+        req_set = get_requirements(args.req_specs, args.requirement)
+        return sorted(get_req_strings(req_set, with_specs))
 
     def get_wheels(self):
         wheelhouse = _safe_mkdirs(self.wheel_build_dir)
         # Get get-pip.py
         get_pip_path = get_get_pip(self.get_pip_url, wheelhouse)
+        # Get pip arguments
+        pip_args = self.pip_parser.parse_args(self.pip_params)
+        req_params, fetch_params = recon_pip_args(pip_args)
         # Find or install pip, install wheel, for given Python.org Python
-        pip_exe = upgrade_pip(
-            get_pip_path, self.py_version, self.pip_fetch_params)
+        pip_exe = upgrade_pip(get_pip_path, self.py_version, fetch_params)
         # Fetch the wheels we need
         check_call([pip_exe, 'wheel',
                     '-w', wheelhouse,
                     'pip', 'setuptools'] +
-                   self.pip_req_params +
-                   self.pip_fetch_params)
+                   req_params + fetch_params)
 
     def write_requires(self):
         """ Write a pip requirements file with given requirements
