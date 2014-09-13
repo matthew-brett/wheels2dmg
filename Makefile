@@ -5,7 +5,8 @@ all: clean
 	    --get-pip-url=${HOME}/Downloads/get-pip.py \
 	    --dmg-out-dir=dist \
 	    --dmg-build-dir=tmp \
-	    --scratch-dir=scratch
+	    --scratch-dir=scratch \
+	    --no-index
 
 clean:
 	rm -rf dist tmp scratch
