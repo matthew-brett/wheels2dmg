@@ -10,7 +10,7 @@ from .piputils import make_pip_parser, recon_pip_args
 from .pkgbuilders import (insert_template_path, PkgWriter)
 
 # Defaults
-PYTHON_VERSION='2.7'
+PYTHON_VERSION='2.7.1'
 
 
 def get_parser():
@@ -33,7 +33,8 @@ There must be at least one REQ_SPEC or REQUIREMENT.
     parser.add_argument('pkg_name', type=str, help='root name of installer')
     parser.add_argument('pkg_version', type=str, help='version of installer')
     parser.add_argument('--python-version',  type=str, default=PYTHON_VERSION,
-                        help='Python version in major.minor format, e.g "3.4"')
+                        help='Python version in major.minor.extr format, '
+                        'e.g "3.4.1"')
     parser.add_argument('--get-pip-url', type=str,
                         help='URL or local path to "get-pip.py" (default is '
                         'to download from canonical URL')

@@ -10,7 +10,7 @@ vim:ft=xml
     <volume-check script="volume_check()"/>
     <script><![CDATA[
 
-const PY_ORG_VERSION = '{{ info.py_version }}'
+const PY_ORG_VERSION = '{{ info.pyv_m_m }}'
 const PY_ORG_ID = "org.python.Python.PythonFramework-" + PY_ORG_VERSION
 const PY_ORG_BIN = "/Library/Frameworks/Python.framework/Versions/" +
     PY_ORG_VERSION + "/bin"

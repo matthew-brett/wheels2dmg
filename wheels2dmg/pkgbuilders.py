@@ -13,6 +13,7 @@ except ImportError:
     from urllib.request import urlopen # Python 3
     from urllib.parse import urlparse
 from tempfile import mkdtemp
+import re
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
@@ -28,6 +29,9 @@ PY_ORG_BASE='/Library/Frameworks/Python.framework/Versions'
 # Canonical get-pip.py URL
 GET_PIP_URL = 'https://bootstrap.pypa.io/get-pip.py'
 PKG_ID_ROOT = 'com.github.MacPython'
+
+# Full Python version checker
+PY_VERSION_RE = re.compile(r'\d\.\d\.\d+')
 
 
 def get_get_pip(get_pip_url, out_dir):
@@ -58,19 +62,50 @@ def get_get_pip(get_pip_url, out_dir):
     return get_pip_path
 
 
-def get_python_path(version):
-    python_path = '{0}/{1}/bin/python{1}'.format(PY_ORG_BASE, version, version)
+def get_python_path(pyv_m_m):
+    """ Return path to Python.org python or raise error
+
+    Parameters
+    ----------
+    pyv_m_m : str
+        Python version in major.minor format (e.g. "2.7")
+
+    Returns
+    -------
+    python_path : str
+        Path to Python.org Python executable
+    """
+    python_path = '{0}/{1}/bin/python{1}'.format(PY_ORG_BASE, pyv_m_m, pyv_m_m)
     if not exists(python_path):
         raise RuntimeError('Need to install Python.org python version ' +
-                           version)
+                           pyv_m_m)
     return python_path
 
 
-def upgrade_pip(get_pip_path, py_version, pip_params):
-    python_path = get_python_path(py_version)
+def upgrade_pip(get_pip_path, pyv_m_m, pip_params):
+    """ Upgrade pip with ``git-pip.py`` script, install ``wheel``
+
+    Installs pip for Python.org Python if not present. Upgrades if necessary.
+    Install ``wheel`` if necessary.
+
+    Parameters
+    ----------
+    get_pip_path : str
+        Path to local copy of ``get-pip.py``
+    pyv_m_m : str
+        Python version in major.minor format (e.g. "2.7")
+    pip_params : sequence
+        Parameters to pass to pip when installing
+
+    Returns
+    -------
+    pip_exe : str
+        Path to ``pip`` executable
+    """
+    python_path = get_python_path(pyv_m_m)
     # Upgrade pip
     check_call([python_path, get_pip_path] + pip_params)
-    pip_exe = '{0}/{1}/bin/pip{1}'.format(PY_ORG_BASE, py_version, py_version)
+    pip_exe = '{0}/{1}/bin/pip{1}'.format(PY_ORG_BASE, pyv_m_m, pyv_m_m)
     if not exists(pip_exe):
         raise RuntimeError('Expected to find pip at {0}, but not so'.format(
             pip_exe))
@@ -94,7 +129,7 @@ class PkgWriter(object):
     def __init__(self,
                  pkg_name,
                  pkg_version,
-                 py_version,
+                 full_py_version,
                  pip_params,
                  get_pip_url = None,
                  dmg_build_dir = None,
@@ -106,7 +141,10 @@ class PkgWriter(object):
         self.do_init()
         self.pkg_name = pkg_name
         self.pkg_version = pkg_version
-        self.py_version = py_version
+        if not PY_VERSION_RE.match(full_py_version):
+            raise ValueError('Need full Python version of form '
+                             'major.minor.extra - e.g. "3.4.1"')
+        self.full_py_version = full_py_version
         self.pip_params = pip_params
         self.get_pip_url = GET_PIP_URL if get_pip_url is None else get_pip_url
         self.dmg_build_dir = self._working_dir(dmg_build_dir)
@@ -144,6 +182,23 @@ class PkgWriter(object):
         for pth in self._to_delete:
             shutil.rmtree(pth)
 
+    # Versions of the python version string
+    @property
+    def pyv_m_m_e(self):
+        return self.full_py_version
+
+    @property
+    def pyv_m_m(self):
+        return self.full_py_version[:3]
+
+    @property
+    def pyv_mm(self):
+        return self.full_py_version.replace('.', '')[:2]
+
+    @property
+    def pyv_m(self):
+        return self.full_py_version[0]
+
     @property
     def pkg_name_version(self):
         return '{0}-{1}'.format(self.pkg_name, self.pkg_version)
@@ -152,7 +207,7 @@ class PkgWriter(object):
     def pkg_name_pyv_version(self):
         return '{0}-py{1}-{2}'.format(
             self.pkg_name,
-            self.py_version.replace('.', ''),
+            self.pyv_mm,
             self.pkg_version)
 
     @property
@@ -177,7 +232,7 @@ class PkgWriter(object):
         pip_args = self.pip_parser.parse_args(self.pip_params)
         req_params, fetch_params = recon_pip_args(pip_args)
         # Find or install pip, install wheel, for given Python.org Python
-        pip_exe = upgrade_pip(get_pip_path, self.py_version, fetch_params)
+        pip_exe = upgrade_pip(get_pip_path, self.pyv_m_m, fetch_params)
         # Fetch the wheels we need
         check_call([pip_exe, 'wheel',
                     '-w', wheelhouse,

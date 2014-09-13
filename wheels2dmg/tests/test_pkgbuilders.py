@@ -48,9 +48,19 @@ def test_get_get_pip():
         assert_file_equal(__file__, gpp)
 
 
+def test_py_version_strings():
+    pkg_writer = PkgWriter('test', '1', '2.7.1', ['foo', 'bar'])
+    assert_equal(pkg_writer.pyv_m_m_e, '2.7.1')
+    assert_equal(pkg_writer.pyv_m_m, '2.7')
+    assert_equal(pkg_writer.pyv_mm, '27')
+    assert_equal(pkg_writer.pyv_m, '2')
+    for ver in ('2', '2.', '2.7', '2.7.'):
+        assert_raises(ValueError, PkgWriter, 'test', '1', ver, ['foo', 'bar'])
+
+
 def test_write_requires():
     # Test write_require function
-    pkg_writer = PkgWriter('test', '1', '2.7', ['foo', 'bar'])
+    pkg_writer = PkgWriter('test', '1', '2.7.1', ['foo', 'bar'])
     exp_out = pjoin(pkg_writer.wheel_build_dir, 'test-1.txt')
     assert_equal(pkg_writer.write_requires(), exp_out)
     assert_file_equal_string(exp_out,
@@ -63,7 +73,8 @@ def test_write_requires():
 foo
 bar
 """)
-    pkg_writer = PkgWriter('another', '2.0', '3.4', ['baf==1.0', 'whack<2.1'])
+    pkg_writer = PkgWriter('another', '2.0', '3.4.1',
+                           ['baf==1.0', 'whack<2.1'])
     exp_out = pjoin(pkg_writer.wheel_build_dir, 'another-2.0.txt')
     assert_equal(pkg_writer.write_requires(), exp_out)
     assert_file_equal_string(exp_out,
@@ -80,7 +91,7 @@ whack<2.1
 
 def test_write_post():
     # Test write_post function
-    pkg_writer = PkgWriter('test', '1', '3.4', ['foo', 'bar'],
+    pkg_writer = PkgWriter('test', '1', '3.4.1', ['foo', 'bar'],
                            wheel_sdir = 'pkgs')
     with TemporaryDirectory() as tmpdir:
         exp_out = pjoin(tmpdir, 'postinstall')
@@ -122,7 +133,7 @@ check_call([expected_pip, 'install',
 
 def test_chatty_names():
     # Test existing chatty names property
-    pkg_writer = PkgWriter('test', '1', '3.4', ['foo', 'bar'])
+    pkg_writer = PkgWriter('test', '1', '3.4.1', ['foo', 'bar'])
     assert_equal(pkg_writer.existing_chatty_names,
                  ('welcome.html', 'license.html'))
 
