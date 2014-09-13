@@ -100,7 +100,7 @@ class PkgWriter(object):
                  dmg_build_dir = None,
                  scratch_dir = None,
                  pkg_id_root = None,
-                 wheel_sdir = 'packages',
+                 wheel_sdir = 'wheels',
                  wheel_component_name = 'wheel-installer'
                 ):
         self.do_init()
