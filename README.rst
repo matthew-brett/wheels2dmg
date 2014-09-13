@@ -17,12 +17,12 @@ on how to install manually into macports and homebrew.
 
 Here's how to make an installer for matplotlib 1.4.0::
 
-    wheels2dmg matplotlib 1.4.0 matplotlib --python-version 3.4
+    wheels2dmg matplotlib 1.4.0 matplotlib --python-version 3.4.1
 
 Or for more than one package::
 
     wheels2dmg scipy-stack 1.0 scipy matplotlib ipython[notebook] \
-        pandas numexpr sympy --python-version 2.7
+        pandas numexpr sympy --python-version 2.7.8
 
 .. warning::
 
