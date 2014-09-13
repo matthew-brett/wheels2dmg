@@ -3,4 +3,6 @@
 build/
 dist/
 tmp/
+scratch/
 MANIFEST
+.DS_Store

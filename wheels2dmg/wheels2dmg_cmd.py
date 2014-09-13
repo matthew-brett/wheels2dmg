@@ -4,22 +4,13 @@ from __future__ import division, print_function
 
 import sys
 import os
-from os.path import abspath
-from subprocess import check_call
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 
-from .piputils import recon_pip_args, get_requirements, get_req_strings
-from .pkgbuilders import (get_get_pip, upgrade_pip, write_pkg, write_dmg,
-                          write_requires, insert_template_path)
-from .tmpdirs import (InGivenDirectory, InTemporaryDirectory)
+from .piputils import recon_pip_args, get_requirements
+from .pkgbuilders import (insert_template_path, PkgWriter)
 
 # Defaults
 PYTHON_VERSION='2.7'
-# get-pip.py URL
-GET_PIP_URL = 'https://bootstrap.pypa.io/get-pip.py'
-
-# Subdirectory containing wheels and source packages
-PKG_SDIR = 'packages'
 
 
 def get_parser():
@@ -45,18 +36,24 @@ There must be at least one REQ_SPEC or REQUIREMENT.
                         help='pip requirement specifiers', metavar='REQ_SPEC')
     parser.add_argument('--python-version',  type=str, default=PYTHON_VERSION,
                         help='Python version in major.minor format, e.g "3.4"')
-    parser.add_argument('--get-pip-url', type=str, default=GET_PIP_URL,
+    parser.add_argument('--get-pip-url', type=str,
                         help='URL or local path to "get-pip.py" (default is '
                         'to download from canonical URL')
     parser.add_argument('--dmg-build-dir', type=str,
                         help='Path to write dmg contents to (default is to '
                         'use a temporary directory)')
+    parser.add_argument('--scratch-dir', type=str,
+                        help='Path to write scratch files to '
+                        'default is to use a temporary directory)')
     parser.add_argument('--dmg-out-dir', type=str, default=os.getcwd(),
                         help='Directory to which we write dmg disk image '
                         '(default is current directory)')
     parser.add_argument('--template-dir', type=str,
-                        help='Althernative directory containing jinja '
+                        help='Alternative directory containing jinja '
                         'templates for installer files')
+    parser.add_argument('--pkg-id-root', type=str,
+                        help='Package id root for installing package receipt '
+                        '(default is "com.github.MacPython")')
     # The rest of the arguments are destined for pip wheel / install calls
     parser.add_argument('--requirement', '-r', type=str, action='append',
                         help='pip requirement file(s)', metavar='REQUIREMENT')
@@ -84,32 +81,15 @@ def main():
         sys.exit(12)
     if not args.template_dir is None:
         insert_template_path(args.template_dir)
-    dmg_out_dir = abspath(args.dmg_out_dir)
-    pkg_name_version = '{0.pkg_name}-{0.pkg_version}'.format(args)
-    if args.dmg_build_dir is None:
-        ctx_mgr = InTemporaryDirectory
-    else:
-        ctx_mgr = lambda : InGivenDirectory(args.dmg_build_dir)
-    with ctx_mgr():
-        os.mkdir(PKG_SDIR)
-        get_pip_path = get_get_pip(args.get_pip_url, PKG_SDIR)
-        # Find or install pip, install wheel, for given Python.org Python
-        pip_exe = upgrade_pip(get_pip_path, args.python_version, fetch_params)
-        # Fetch the wheels we need
-        check_call([pip_exe, 'wheel', '-w', PKG_SDIR, 'pip', 'setuptools'] +
-                   req_params + fetch_params)
-        # Analyze the pip requirements
-        reqs = get_requirements(args.req_specs, args.requirement)
-        # Write requirements file
-        write_requires(get_req_strings(reqs),
-                       pkg_name_version,
-                       PKG_SDIR)
-        # Write scripts only installer
-        write_pkg(args.python_version,
-                  '.',
-                  PKG_SDIR,
-                  args.pkg_name,
-                  args.pkg_version)
-        # Write packages and installer to dmg
-        write_dmg('.', dmg_out_dir,
-                  args.pkg_name, args.python_version, args.pkg_version)
+    reqs = get_requirements(args.req_specs, args.requirement)
+    pkg_writer = PkgWriter(args.pkg_name,
+                           args.pkg_version,
+                           args.python_version,
+                           reqs,
+                           req_params,
+                           fetch_params,
+                           args.get_pip_url,
+                           args.dmg_build_dir,
+                           args.scratch_dir,
+                           pkg_id_root = args.pkg_id_root)
+    pkg_writer.write_dmg(args.dmg_out_dir)

@@ -12,16 +12,21 @@ try:
 except ImportError:
     from urllib.request import urlopen # Python 3
     from urllib.parse import urlparse
+from tempfile import mkdtemp
 
 from jinja2 import Environment, FileSystemLoader
+
+from .piputils import get_req_strings
 
 JINJA_LOADER = FileSystemLoader(pjoin(dirname(__file__), 'templates'))
 JINJA_ENV = Environment(loader=JINJA_LOADER, trim_blocks=True)
 
-from .tmpdirs import TemporaryDirectory
-
 # Installed location of Python.org Python
 PY_ORG_BASE='/Library/Frameworks/Python.framework/Versions'
+
+# Canonical get-pip.py URL
+GET_PIP_URL = 'https://bootstrap.pypa.io/get-pip.py'
+PKG_ID_ROOT = 'com.github.MacPython'
 
 
 def get_get_pip(get_pip_url, out_dir):
@@ -73,93 +78,195 @@ def upgrade_pip(get_pip_path, py_version, pip_params):
     return pip_exe
 
 
-def write_requires(requirement_strings,
-                   pkg_name_version,
-                   out_dir,
-                   template_fname = 'requirements.txt'):
-    """ Write a pip requirements file with given requirements
-
-    Parameters
-    ----------
-    requirement_strings : sequence
-        List of strings to be written as lines to requirement file
-    pkg_name_version : str
-        Package name combined with version string.  Will be used to form output
-        file name
-    out_dir : str
-        Directory to which to write requirements file
-    template_fname : str, optional
-        Template filename, to be fetched from the global ``JINJA_LOADER``
-
-    Returns
-    -------
-    out_fname : str
-        Full path to written file
-    """
-    out_fname = pjoin(out_dir, pkg_name_version + '.txt')
-    template = JINJA_ENV.get_template(template_fname)
-    with open(out_fname, 'wt') as fobj:
-        fobj.write(template.render(**locals()))
-    return out_fname
+def _safe_mkdirs(path):
+    if not exists(path):
+        os.makedirs(path)
+    return path
 
 
-def write_post(py_version,
-               out_dir,
-               pkg_name_version,
-               pkg_sdir='packages',
-               template_fname='postinstall'):
-    """ Write ``postinstall`` file
+class PkgWriter(object):
 
-    Parameters
-    ----------
-    py_version : str
-        Python major.minor version e.g. ``3.4``
-    pkg_name_version : str
-        Package name plus version
-    out_dir : str
-        Directory to which to write file
-    pkg_sdir  : str, optional
-        Subdirector relative to ``$PACKAGE_PATH`` containing wheels
-    template_fname : str, optional
-        Name of jinja2 template
-    """
-    out_fname = pjoin(out_dir, 'postinstall')
-    template = JINJA_ENV.get_template(template_fname)
-    with open(out_fname, 'wt') as fobj:
-        fobj.write(template.render(
-            py_version = py_version,
-            pkg_name_version = pkg_name_version,
-            pkg_sdir = pkg_sdir,
-            py_org_base = PY_ORG_BASE))
-    check_call(['chmod', 'a+x', out_fname])
-    return out_fname
+    py_org_base = PY_ORG_BASE
 
+    def __init__(self,
+                 pkg_name,
+                 pkg_version,
+                 py_version,
+                 requirements,
+                 pip_req_params,
+                 pip_fetch_params,
+                 get_pip_url = None,
+                 dmg_build_dir = None,
+                 scratch_dir = None,
+                 pkg_id_root = None,
+                 wheel_sdir = 'packages',
+                 wheel_component_name = 'wheel-installer'
+                ):
+        self.do_init()
+        self.pkg_name = pkg_name
+        self.pkg_version = pkg_version
+        self.py_version = py_version
+        self.requirements = requirements
+        self.pip_req_params = pip_req_params
+        self.pip_fetch_params = pip_fetch_params
+        self.get_pip_url = GET_PIP_URL if get_pip_url is None else get_pip_url
+        self.dmg_build_dir = self._working_dir(dmg_build_dir)
+        self.scratch_dir = self._working_dir(scratch_dir)
+        self.pkg_id_root = PKG_ID_ROOT if pkg_id_root is None else pkg_id_root
+        self.wheel_sdir = wheel_sdir
+        self.wheel_component_name = wheel_component_name
 
-def write_pkg(py_version, out_dir, pkg_sdir, identifier, version):
-    out_dir = abspath(out_dir)
-    pkg_name_version =  '{0}-{1}'.format(identifier, version)
-    with TemporaryDirectory() as scripts:
-        write_post(py_version, scripts, pkg_name_version, pkg_sdir)
-        pkg_fname = pjoin(out_dir, pkg_name_version + '.pkg')
+    def do_init(self):
+        self._to_delete = []
+
+    def _working_dir(self, work_dir):
+        """ Make working directory `work_dir`, return absolute path
+
+        Parameters
+        ----------
+        work_dir : None or str
+            If str, directory to create if it doesn't exist. If None, make a
+            temporary directory and return that, noting that we have to delete
+            when we've finished.
+
+        Returns
+        -------
+        abs_work_dir : str
+            Absolute path to working directory
+        """
+        if work_dir is None:
+            work_dir  = mkdtemp()
+            self._to_delete.append(work_dir)
+        else:
+            _safe_mkdirs(work_dir)
+        return abspath(work_dir)
+
+    def __del__(self):
+        for pth in self._to_delete:
+            shutil.rmtree(pth)
+
+    @property
+    def pkg_name_version(self):
+        return '{0}-{1}'.format(self.pkg_name, self.pkg_version)
+
+    @property
+    def pkg_name_pyv_version(self):
+        return '{0}-py{1}-{2}'.format(
+            self.pkg_name,
+            self.py_version.replace('.', ''),
+            self.pkg_version)
+
+    @property
+    def wheel_build_dir(self):
+        return pjoin(self.dmg_build_dir, self.wheel_sdir)
+
+    def get_requirement_strings(self, with_specs=True):
+        return sorted(get_req_strings(
+            self.requirements, with_specs))
+
+    def get_wheels(self):
+        wheelhouse = _safe_mkdirs(self.wheel_build_dir)
+        # Get get-pip.py
+        get_pip_path = get_get_pip(self.get_pip_url, wheelhouse)
+        # Find or install pip, install wheel, for given Python.org Python
+        pip_exe = upgrade_pip(
+            get_pip_path, self.py_version, self.pip_fetch_params)
+        # Fetch the wheels we need
+        check_call([pip_exe, 'wheel',
+                    '-w', wheelhouse,
+                    'pip', 'setuptools'] +
+                   self.pip_req_params +
+                   self.pip_fetch_params)
+
+    def write_requires(self):
+        """ Write a pip requirements file with given requirements
+        """
+        out_fname = pjoin(_safe_mkdirs(self.wheel_build_dir),
+                          self.pkg_name_version + '.txt')
+        template = get_template('requirements.txt')
+        with open(out_fname, 'wt') as fobj:
+            fobj.write(template.render(info = self))
+
+    def write_wheelhouse(self):
+        self.get_wheels()
+        self.write_requires()
+
+    def write_post(self, out_dir):
+        """ Write ``postinstall`` file
+
+        Parameters
+        ----------
+        out_dir : str
+            Directory to which to write file
+        """
+        out_fname = pjoin(out_dir, 'postinstall')
+        template = get_template('postinstall')
+        with open(out_fname, 'wt') as fobj:
+            fobj.write(template.render(info = self))
+        check_call(['chmod', 'a+x', out_fname])
+
+    def write_component_pkg(self):
+        """ Write component package to install wheels
+
+        Returns
+        -------
+        component_pkg_fname : str
+            Filename of written compoent package
+        """
+        pkg_fname = pjoin(self.scratch_dir, self.wheel_component_name + '.pkg')
+        identifier = '{0}.{1}'.format(self.pkg_id_root,
+                                      self.pkg_name_pyv_version)
+        scripts = pjoin(self.scratch_dir, 'scripts')
+        _safe_mkdirs(scripts)
+        self.write_post(scripts)
         check_call(['pkgbuild',
                     '--nopayload',
                     '--scripts', scripts,
                     '--identifier', identifier,
-                    '--version', version,
+                    '--version', self.pkg_version,
                     pkg_fname])
-    return pkg_fname
+        return pkg_fname
 
+    def write_distribution(self):
+        template = get_template('Distribution')
+        out_fname = pjoin(self.scratch_dir, 'Distribution')
+        with open(out_fname, 'wt') as fobj:
+            fobj.write(template.render(info = self))
+        return out_fname
 
-def write_dmg(dmg_in_dir, dmg_out_dir, identifier, py_version, pkg_version):
-    if not exists(dmg_out_dir):
-        os.mkdir(dmg_out_dir)
-    dmg_name = '{0}-py{1}-{2}'.format(
-        identifier,
-        py_version.replace('.', ''),
-        pkg_version)
-    dmg_fname = pjoin(dmg_out_dir, dmg_name + '.dmg')
-    check_call(['hdiutil', 'create', '-srcfolder', dmg_in_dir,
-                '-volname', dmg_name, dmg_fname])
+    def write_resources(self):
+        resources = pjoin(self.scratch_dir, 'resources')
+        en_resources = pjoin(resources, 'en.lproj')
+        _safe_mkdirs(en_resources)
+        for fbase in ('welcome.html', 'readme.html', 'license.html'):
+            out_fname = pjoin(en_resources, fbase)
+            with open(out_fname, 'wt') as fobj:
+                fobj.write(get_template(fbase).render(info = self))
+        return resources
+
+    def write_product_archive(self):
+        """ Write product archive
+        """
+        distribution = self.write_distribution()
+        self.write_component_pkg()
+        resources = self.write_resources()
+        product_fname = pjoin(self.dmg_build_dir,
+                              self.pkg_name_pyv_version + '.pkg')
+        check_call(['productbuild',
+                    '--distribution', distribution,
+                    '--resources', resources,
+                    '--package-path', self.scratch_dir,
+                    product_fname])
+
+    def write_dmg(self, out_path):
+        self.write_wheelhouse()
+        self.write_product_archive()
+        dmg_fname = pjoin(out_path, self.pkg_name_pyv_version + '.dmg')
+        check_call(['hdiutil', 'create',
+                    '-srcfolder', self.dmg_build_dir,
+                    '-volname', self.pkg_name_pyv_version,
+                    dmg_fname])
+        return dmg_fname
 
 
 def insert_template_path(path):

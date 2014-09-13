@@ -1,9 +1,9 @@
-# Requirements file for {{ pkg_name_version }}
+# Requirements file for {{ info.pkg_name_version }}
 #
 # Use with:
 #
-#     pip install -r {{ pkg_name_version }}.txt
+#     pip install -r {{ info.pkg_name_version }}.txt
 
-{% for item in requirement_strings %}
+{% for item in info.get_requirement_strings() %}
 {{ item }}
 {% endfor %}

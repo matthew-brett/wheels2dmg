@@ -2,7 +2,6 @@
 """
 from __future__ import division, print_function
 
-from copy import copy
 from pip.req import InstallRequirement, RequirementSet, parse_requirements
 from pip.download import PipSession
 
@@ -83,12 +82,14 @@ def get_requirements(req_specs, requirement_files=None):
     return requirement_set
 
 
-def get_req_strings(req_set):
+def get_req_strings(req_set, with_specs=True):
     """ Get requirement strings from a RequirementSet
 
     Parameters
     ----------
     req_set : RequirementSet instance
+    with_specs : bool, optional
+        If True, append specified version spec strings
 
     Returns
     -------
@@ -102,7 +103,7 @@ def get_req_strings(req_set):
         req_str = req.name
         if req.extras:
             req_str += '[{0}]'.format(','.join(req.extras))
-        if req.req.specs:
+        if with_specs and req.req.specs:
             req_str += ','.join([''.join(s) for s in req.req.specs])
         req_strings.append(req_str)
     return req_strings

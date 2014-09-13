@@ -11,10 +11,10 @@ package_path = os.environ.get('PACKAGE_PATH')
 if package_path is None:
     sys.exit(10)
 package_dir = dirname(package_path)
-wheelhouse = package_dir + '/{{ pkg_sdir }}'
+wheelhouse = package_dir + '/{{ info.wheel_sdir }}'
 # Find Python.org Python
-python_bin = '{{ py_org_base }}/{{ py_version }}/bin'
-python_path = python_bin +  '/python{{ py_version }}'
+python_bin = '{{ info.py_org_base }}/{{ info.py_version }}/bin'
+python_path = python_bin + '/python{{ info.py_version }}'
 if not exists(python_path):
     sys.exit(20)
 # Install pip
@@ -23,10 +23,10 @@ check_call([python_path,
             '-f', wheelhouse,
             '--no-index'])
 # Find pip
-expected_pip = python_bin + '/pip{{ py_version }}'
+expected_pip = python_bin + '/pip{{ info.py_version }}'
 if not exists(expected_pip):
     sys.exit(30)
 check_call([expected_pip, 'install',
             '--no-index', '--upgrade',
             '--find-links', wheelhouse,
-            '-r', wheelhouse + '/{{ pkg_name_version }}.txt'])
+            '-r', wheelhouse + '/{{ info.pkg_name_version }}.txt'])

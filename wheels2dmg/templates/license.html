@@ -1,0 +1,18 @@
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
+    <title>Licenses for packages in {{ info.pkg_name }} </title>
+</head>
+<body>
+<font face="Helvetica">
+Please see the license information for each package we install:
+
+<ul>
+{% for item in info.get_requirement_strings(False) %}
+    <li><a href="http://pypi.python.org/pypi/{{ item }}">
+        {{ item }}</a></li>
+{% endfor %}
+</ul>
+</font>
+</body>
+</html>
