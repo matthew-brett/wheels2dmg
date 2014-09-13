@@ -2,8 +2,38 @@
 """
 from __future__ import division, print_function
 
+from argparse import ArgumentParser
+
 from pip.req import InstallRequirement, RequirementSet, parse_requirements
 from pip.download import PipSession
+
+
+def make_pip_parser(parser = None):
+    """ Add (some) pip arguments to a Argparse `parser`
+
+    Parameters
+    ----------
+    parser : None or :class:`argparse.ArgumentParser` instance
+        Parser to which to add arguments.  If None, make a new empty
+        parser. If not None, parser modified in-place
+    """
+    if parser is None:
+        parser = ArgumentParser()
+    # Arguments for pip wheel / install calls
+    parser.add_argument('req_specs', type=str, nargs='*', default=[],
+                        help='pip requirement specifiers', metavar='REQ_SPEC')
+    parser.add_argument('--requirement', '-r', type=str, action='append',
+                        help='pip requirement file(s)', metavar='REQUIREMENT')
+    parser.add_argument('--index-url', '-i', type=str,
+                        help='base URL of Python index (see pip install)')
+    parser.add_argument('--extra-index-url', type=str, action='append',
+                        help='extra URLs of Python indices (see pip)')
+    parser.add_argument('--no-index',  action='store_true',
+                        help='disable search of pip indices when fetching '
+                        'packages to make installer')
+    parser.add_argument('--find-links', '-f', type=str, action='append',
+                        help='locations to find packages to make installer')
+    return parser
 
 
 def recon_pip_args(args):

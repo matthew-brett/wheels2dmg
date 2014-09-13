@@ -1,10 +1,12 @@
 """ Testing piputils module
 """
 
-from os.path import join as pjoin, split as psplit, abspath, dirname
+from os.path import join as pjoin, abspath, dirname
 
 from pip.exceptions import InstallationError
-from ..piputils import (recon_pip_args, get_requirements, get_req_strings)
+
+from ..piputils import (make_pip_parser, recon_pip_args, get_requirements,
+                        get_req_strings)
 from ..wheels2dmg_cmd import get_parser
 from ..tmpdirs import InTemporaryDirectory
 
@@ -84,39 +86,41 @@ def test_reconstruct_pip_args():
 
 def test_parser_reconstruct_pip():
     # Check roundtrip using our parser and recon_pip_args
-    parser = get_parser()
-    args = ['pkg_name', '1.0']
-    for in_out_args in [
-        # arguments to parser, [expected arguments to send to pip]
-        # If second element missing assume input + output same
-        ([],),
-        (['--requirement=file1.txt'],),
-        (['-r', 'file1.txt'], ['--requirement=file1.txt']),
-        (['--requirement=file1.txt', '--requirement=file2.txt'],),
-        (['-r', 'file1.txt', '-r', 'file2.txt'],
-         ['--requirement=file1.txt', '--requirement=file2.txt']),
-        (['--index-url=http://www.foo.com'],),
-        (['-i', 'http://www.foo.com'], ['--index-url=http://www.foo.com']),
-        (['--extra-index-url=http://www.foo.com'],),
-        (['--extra-index-url=http://www.foo.com'],),
-        (['--extra-index-url=http://www.foo.com',
-          '--extra-index-url=http://bar.org'],),
-        (['--no-index'],),
-        (['--find-links=http://www.foo.com'],),
-        (['--find-links=http://www.foo.com',
-          '--find-links=http://bar.org'],),
-        (['-f', 'http://www.foo.com', '--find-links=http://bar.org'],
-         ['--find-links=http://www.foo.com',
-          '--find-links=http://bar.org'],),
-        (['foo', 'bar'],)
-    ]:
-        if len(in_out_args) == 1:
-            in_args = in_out_args[0]
-            out_args = in_args
-        else:
-            in_args, out_args = in_out_args
-        parsed = parser.parse_args(args + in_args)
-        assert_equal(sum(recon_pip_args(parsed), []), out_args)
+    for parser, null_args in (
+        (get_parser(), ['pkg_name', '1.0']),
+        (make_pip_parser(), [])
+    ):
+        for in_out_args in [
+            # arguments to parser, [expected arguments to send to pip]
+            # If second element missing assume input + output same
+            ([],),
+            (['--requirement=file1.txt'],),
+            (['-r', 'file1.txt'], ['--requirement=file1.txt']),
+            (['--requirement=file1.txt', '--requirement=file2.txt'],),
+            (['-r', 'file1.txt', '-r', 'file2.txt'],
+            ['--requirement=file1.txt', '--requirement=file2.txt']),
+            (['--index-url=http://www.foo.com'],),
+            (['-i', 'http://www.foo.com'], ['--index-url=http://www.foo.com']),
+            (['--extra-index-url=http://www.foo.com'],),
+            (['--extra-index-url=http://www.foo.com'],),
+            (['--extra-index-url=http://www.foo.com',
+            '--extra-index-url=http://bar.org'],),
+            (['--no-index'],),
+            (['--find-links=http://www.foo.com'],),
+            (['--find-links=http://www.foo.com',
+            '--find-links=http://bar.org'],),
+            (['-f', 'http://www.foo.com', '--find-links=http://bar.org'],
+            ['--find-links=http://www.foo.com',
+            '--find-links=http://bar.org'],),
+            (['foo', 'bar'],)
+        ]:
+            if len(in_out_args) == 1:
+                in_args = in_out_args[0]
+                out_args = in_args
+            else:
+                in_args, out_args = in_out_args
+            parsed = parser.parse_args(null_args + in_args)
+            assert_equal(sum(recon_pip_args(parsed), []), out_args)
 
 
 def assert_names_equal(req_set, names):
