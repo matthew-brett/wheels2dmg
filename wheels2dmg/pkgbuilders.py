@@ -311,6 +311,14 @@ class PkgWriter(object):
         check_call(['SetFile', '-a', 'E', webloc_fname])
         return webloc_fname
 
+    def write_readme(self):
+        """ Write README.txt file """
+        template = get_template('README.txt')
+        readme_fname = pjoin(self.dmg_build_dir, 'README.txt')
+        with open(readme_fname, 'wt') as fobj:
+            fobj.write(template.render(info = self))
+        return readme_fname
+
     def write_component_pkg(self):
         """ Write component package to install wheels
 
@@ -375,6 +383,7 @@ class PkgWriter(object):
 
     def write_dmg(self, out_path):
         self.write_webloc()
+        self.write_readme()
         self.write_wheelhouse()
         self.write_product_archive()
         dmg_fname = pjoin(out_path, self.pkg_name_pyv_version + '.dmg')
