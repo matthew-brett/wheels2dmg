@@ -251,10 +251,15 @@ class PkgWriter(object):
         return '{0}-{1}'.format(self.pkg_name, self.pkg_version)
 
     @property
-    def pkg_name_pyv_version(self):
-        return '{0}-py{1}-{2}'.format(
+    def pkg_name_pyv(self):
+        return '{0}-py{1}'.format(
             self.pkg_name,
-            self.pyv_mm,
+            self.pyv_mm)
+
+    @property
+    def pkg_name_pyv_version(self):
+        return '{0}-{1}'.format(
+            self.pkg_name_pyv,
             self.pkg_version)
 
     @property
@@ -268,7 +273,7 @@ class PkgWriter(object):
 
     @property
     def identifier(self):
-        return '{0}.{1}'.format(self.pkg_id_root, self.pkg_name_pyv_version)
+        return '{0}.{1}'.format(self.pkg_id_root, self.pkg_name_pyv)
 
     def get_requirement_strings(self, extras=True, versions=True):
         """ Return list of requirement strings for requirements in `self`
