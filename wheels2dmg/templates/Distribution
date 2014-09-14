@@ -3,6 +3,7 @@
 vim:ft=xml
 -->
 <installer-gui-script minSpecVersion="1">
+    <title>{{ info.pkg_name_pyv_version }}</title>
     <options customize="never" rootVolumeOnly="true"/>
     {% for name in info.existing_chatty_names %}
     <{{ name.split('.')[0] }} mime-type="text/html" file="{{ name }}"/>
