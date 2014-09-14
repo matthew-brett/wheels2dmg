@@ -14,8 +14,13 @@ except ImportError:
     from urllib.parse import urlparse
 from tempfile import mkdtemp
 import re
+from glob import glob
+from warnings import catch_warnings, simplefilter
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+
+from delocate.delocating import delocate_wheel
+from delocate.wheeltools import add_platforms
 
 from .piputils import (make_pip_parser, recon_pip_args, get_requirements,
                        get_req_strings)
@@ -136,7 +141,8 @@ class PkgWriter(object):
                  scratch_dir = None,
                  pkg_id_root = None,
                  wheel_sdir = 'wheels',
-                 wheel_component_name = 'wheel-installer'
+                 wheel_component_name = 'wheel-installer',
+                 delocate_wheels = True
                 ):
         self.do_init()
         self.pkg_name = pkg_name
@@ -152,6 +158,7 @@ class PkgWriter(object):
         self.pkg_id_root = PKG_ID_ROOT if pkg_id_root is None else pkg_id_root
         self.wheel_sdir = wheel_sdir
         self.wheel_component_name = wheel_component_name
+        self.delocate_wheels = delocate_wheels
 
     def do_init(self):
         self._to_delete = []
@@ -259,6 +266,23 @@ class PkgWriter(object):
                     'pip', 'setuptools'] +
                    req_params + fetch_params)
 
+    def process_wheels(self):
+        """ Delocate built wheels, check archs, add platform tags
+        """
+        for wheel in glob(pjoin(self.wheel_build_dir, '*.whl')):
+            if not '-macosx_10_6_intel' in wheel: # Pure wheel
+                continue
+            if self.delocate_wheels:
+                with catch_warnings():
+                    simplefilter('ignore')
+                    delocate_wheel(wheel, require_archs='intel')
+            new_wheel = add_platforms(
+                wheel,
+                ('macosx_10_9_intel', 'macosx_10_9_x86_64'),
+                clobber=True)
+            if new_wheel != wheel:
+                os.unlink(wheel)
+
     def write_requires(self):
         """ Write a pip requirements file with given requirements
 
@@ -278,6 +302,7 @@ class PkgWriter(object):
         """ Write wheels, requirements into wheelhouse directory
         """
         self.get_wheels()
+        self.process_wheels()
         self.write_requires()
 
     def write_post(self, out_dir):
