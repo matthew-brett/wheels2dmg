@@ -55,4 +55,5 @@ function volume_check () {
     </choice>
     <pkg-ref id="wheel-installer" version="0" onConclusion="none"
         installKBytes="1">#wheel-installer.pkg</pkg-ref>
+    <product id="{{ info.identifier }}" version="{{ info.pkg_version }}"/>
 </installer-gui-script>

@@ -157,6 +157,17 @@ def test_chatty_names():
                  ('welcome.html', 'license.html'))
 
 
+def test_identifier():
+    # Test identifier
+    pkg_writer = PkgWriter('test', '1.0', '3.4.1', ['foo', 'bar'])
+    assert_equal(pkg_writer.identifier, 'com.github.MacPython.test-py34-1.0')
+    pkg_writer = PkgWriter('another', '2.0', '3.3.5', ['foo', 'bar'],
+                           pkg_id_root='org.dynevor.paul')
+    assert_equal(pkg_writer.identifier,
+                 'org.dynevor.paul.another-py33-2.0')
+
+
+
 def test_template_override():
     # Check that we can override a template
     original_fname = pjoin(TEMPLATE_PATH, 'requirements.txt')

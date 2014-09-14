@@ -230,6 +230,10 @@ class PkgWriter(object):
         return tuple(name for name in self.chatty_names
                      if not get_template(name) is None)
 
+    @property
+    def identifier(self):
+        return '{0}.{1}'.format(self.pkg_id_root, self.pkg_name_pyv_version)
+
     def get_requirement_strings(self, extras=True, versions=True):
         """ Return list of requirement strings for requirements in `self`
 
@@ -353,15 +357,13 @@ class PkgWriter(object):
             Filename of written compoent package
         """
         pkg_fname = pjoin(self.scratch_dir, self.wheel_component_name + '.pkg')
-        identifier = '{0}.{1}'.format(self.pkg_id_root,
-                                      self.pkg_name_pyv_version)
         scripts = pjoin(self.scratch_dir, 'scripts')
         _safe_mkdirs(scripts)
         self.write_post(scripts)
         check_call(['pkgbuild',
                     '--nopayload',
                     '--scripts', scripts,
-                    '--identifier', identifier,
+                    '--identifier', self.identifier,
                     '--version', self.pkg_version,
                     pkg_fname])
         return pkg_fname
