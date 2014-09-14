@@ -185,18 +185,22 @@ class PkgWriter(object):
     # Versions of the python version string
     @property
     def pyv_m_m_e(self):
+        """ Full version, e.g "3.4.1" """
         return self.full_py_version
 
     @property
     def pyv_m_m(self):
+        """ Major.minor version, e.g "3.4" """
         return self.full_py_version[:3]
 
     @property
     def pyv_mm(self):
+        """ Major,minor version with no dot e.g "34" """
         return self.full_py_version.replace('.', '')[:2]
 
     @property
     def pyv_m(self):
+        """ Major version e.g "3" """
         return self.full_py_version[0]
 
     @property
