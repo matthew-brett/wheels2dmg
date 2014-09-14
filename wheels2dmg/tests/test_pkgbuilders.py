@@ -183,6 +183,17 @@ def test_identifier():
                  'org.dynevor.paul.another-py33')
 
 
+def test_dmg_no_clobber():
+    # Test IOError if dmg exists
+    pkg_writer = PkgWriter('test', '1.0', '3.4.1', ['foo', 'bar'])
+    with TemporaryDirectory() as tmpdir:
+        exp_name = pjoin(tmpdir, 'test-py34-1.0.dmg')
+        with open(exp_name, 'wt') as fobj:
+            fobj.write('My essential data')
+        assert_raises(IOError, pkg_writer.write_dmg, tmpdir)
+
+
+
 def test_template_override():
     # Check that we can override a template
     original_fname = pjoin(TEMPLATE_PATH, 'requirements.txt')

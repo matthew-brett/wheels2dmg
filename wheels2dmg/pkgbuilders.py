@@ -449,14 +449,27 @@ class PkgWriter(object):
                     '--package-path', self.scratch_dir,
                     product_fname])
 
-    def write_dmg(self, out_path):
+    def write_dmg(self, out_dir, clobber=False):
         """ Write disk image ``.dmg`` file
+
+        Parameters
+        ----------
+        out_dir : str
+            Directory in which to write ``.dmg`` file
+        clobber : bool, optional
+            If True, overwrite existing file.  If False, raise IOError if file
+            exists.
         """
+        dmg_fname = pjoin(out_dir, self.pkg_name_pyv_version + '.dmg')
+        if exists(dmg_fname):
+            if not clobber:
+                raise IOError(
+                    '{0} exists, declining to overwrite'.format(dmg_fname))
+            os.unlink(dmg_fname)
         self.write_webloc()
         self.write_readme()
         self.write_wheelhouse()
         self.write_product_archive()
-        dmg_fname = pjoin(out_path, self.pkg_name_pyv_version + '.dmg')
         check_call(['hdiutil', 'create',
                     '-srcfolder', self.dmg_build_dir,
                     '-volname', self.pkg_name_pyv_version,
