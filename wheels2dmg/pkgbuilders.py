@@ -126,7 +126,8 @@ def _safe_mkdirs(path):
 
 
 class PkgWriter(object):
-
+    """ Class to prepare and write DMG installer
+    """
     py_org_base = PY_ORG_BASE
     pip_parser = make_pip_parser()
     chatty_names = ('welcome.html', 'readme.html', 'license.html')
@@ -144,6 +145,39 @@ class PkgWriter(object):
                  wheel_component_name = 'wheel-installer',
                  delocate_wheels = True
                 ):
+        """ Initialize PkgWriter class
+
+        Parameters
+        ----------
+        pkg_name : str
+            The name of the package / installer
+        pkg_version : str
+            Version of the package / installer
+        full_py_version : str
+            Python version in form major.minor.extra - e.g. "3.4.1"
+        pip_params : sequence
+            Parameters to pip "wheel" command giving requirements and any index
+            finding parameters.
+        get_pip_url : None or str, optional
+            URL or local path to ``get-pip.py`` command. We translate None to a
+            the canonical pip URL
+        dmg_build_dir : None or str, optional
+            Directory in which to compile contents of disk image. Created if it
+            does not exist.  If None, use temporary directory.
+        scratch_dir : None or str, optional
+            Directory in which to write files to construct installer packages.
+            Created if it does not exist.  If None, use temporary directory.
+        pkg_id_root : None or str, optional
+            Root of 'identifier' used to identify package, in package receipt
+        wheel_sdir : str, optional
+            Name of wheelhouse directory on disk image
+        wheel_component_name : str, optional
+            Name of wheel component package within product archive .pkg file.
+        delocate_wheels : bool, optonal
+            If True, run ``delocate_wheel`` on all wheels in wheelhouse, to
+            detect and maybe fix wheels built as part of the ``pip wheel``
+            procedure to compile the wheelhouse.
+        """
         self.do_init()
         self.pkg_name = pkg_name
         self.pkg_version = pkg_version
@@ -161,6 +195,8 @@ class PkgWriter(object):
         self.delocate_wheels = delocate_wheels
 
     def do_init(self):
+        """ Extra initialization for object
+        """
         self._to_delete = []
 
     def _working_dir(self, work_dir):
@@ -395,7 +431,7 @@ class PkgWriter(object):
         return resources
 
     def write_product_archive(self):
-        """ Write product archive
+        """ Write product archive ``.pkg`` file
         """
         distribution = self.write_distribution()
         self.write_component_pkg()
@@ -409,6 +445,8 @@ class PkgWriter(object):
                     product_fname])
 
     def write_dmg(self, out_path):
+        """ Write disk image ``.dmg`` file
+        """
         self.write_webloc()
         self.write_readme()
         self.write_wheelhouse()
