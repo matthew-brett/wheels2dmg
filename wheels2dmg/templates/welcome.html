@@ -4,11 +4,19 @@
     <title>Install {{ info.pkg_name }} </title>
 </head>
 <body>
-<font face="Helvetica"><b>Welcome to {{ info.pkg_name }} wheels installer
-</b></font>
+<font face="Helvetica">
+<b>Welcome to {{ info.pkg_name }} wheels installer </b>
 <p>
-<font face="Helvetica">This installer will install the following packages into
-    <a href="http://python.org">Python.org</a> Python version
-    {{ info.pyv_m_m }}.</font>
+This installer will install the following packages into <a
+href="http://python.org">Python.org</a> Python version {{ info.pyv_m_m }}.
+
+<ul>
+{% for item in info.get_requirement_strings() %}
+    <li>{{ item }}</li>
+{% endfor %}
+</ul>
+
+</font>
+</ul>
 </body>
 </html>
