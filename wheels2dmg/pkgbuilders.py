@@ -168,7 +168,9 @@ class PkgWriter(object):
             Directory in which to write files to construct installer packages.
             Created if it does not exist.  If None, use temporary directory.
         pkg_id_root : None or str, optional
-            Root of 'identifier' used to identify package, in package receipt
+            Root of 'identifier' used to identify package, in database of
+            package receipts (given by ``pkgutil --pkgs``). The installer does
+            not itself generate a package receipt, (see Notes).
         wheel_sdir : str, optional
             Name of wheelhouse directory on disk image
         wheel_component_name : str, optional
@@ -177,6 +179,18 @@ class PkgWriter(object):
             If True, run ``delocate_wheel`` on all wheels in wheelhouse, to
             detect and maybe fix wheels built as part of the ``pip wheel``
             procedure to compile the wheelhouse.
+
+        Notes
+        -----
+        On receipts: `pkg_id_root` gives the root receipt indentifier for the
+        package, and the full identifier is given by the ``identifier``
+        property below.  The identifier is the name of the "receipt" that goes
+        into the database of installed package read and summarized by ``pkgutil
+        --pkgs``. This installer does not write a receipt itself, because it is
+        a "scripts only" installer (see ``man pkgbuild``), and therefore lacks
+        a ``Bom`` (bill-of-materials) file in the wheel-installing compoenent
+        package.  The only use of the identifier is so OSX doesn't confuse this
+        package with another that might already be installed.
         """
         self.do_init()
         self.pkg_name = pkg_name
