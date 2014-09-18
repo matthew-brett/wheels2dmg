@@ -62,7 +62,7 @@ def get_get_pip(get_pip_url, out_dir):
         shutil.copyfile(gpp_path, get_pip_path)
     else: # URL
         url_obj = urlopen(get_pip_url)
-        with open(get_pip_path, 'wt') as fobj:
+        with open(get_pip_path, 'wb') as fobj:
             fobj.write(url_obj.read())
     return get_pip_path
 
