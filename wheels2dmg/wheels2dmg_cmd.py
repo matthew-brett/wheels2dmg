@@ -10,7 +10,7 @@ from .piputils import make_pip_parser, recon_pip_args
 from .pkgbuilders import (insert_template_path, PkgWriter)
 
 # Defaults
-PYTHON_VERSION='2.7.1'
+PYTHON_VERSION='2.7.8'
 
 
 def get_parser():
