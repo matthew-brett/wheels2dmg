@@ -1,0 +1,41 @@
+language:
+- objective-c
+env:
+  global:
+  - SCIPY_STACK_VERSION=1.0
+  matrix:
+  - VERSION=2.7.8
+  - VERSION=3.3.5
+  - VERSION=3.4.1
+install:
+  - source .travis/terryfy/travis_tools.sh
+  - get_python_environment macpython $VERSION
+  - $PIP_CMD install -r requirements.txt
+  - $PYTHON_EXE setup.py install
+  - mkdir build_dir
+  - cd build_dir
+  - wheels2dmg scipy-stack $SCIPY_STACK_VERSION
+        scipy matplotlib ipython[notebook,test]
+        pandas numexpr sympy --python-version $VERSION
+  - cd ..
+script:
+  # Install from disk image
+  - PY_MN=`get_py_mm_nodot`
+  - PKG_NAME=scipy-stack-py$PY_MN-$SCIPY_STACK_VERSION
+  - hdiutil attach build_dir/$PKG_NAME.dmg
+  - sudo installer -pkg /Volumes/$PKG_NAME/$PKG_NAME.pkg -verbose -target /
+  - hdiutil detach /Volumes/$PKG_NAME
+  # Run tests
+  - mkdir tmp_for_test
+  - cd tmp_for_test
+  - source ../.travis/scipy-stack-osx-testing/travis_test.sh
+  - cd ..
+before_deploy: cd build_dir
+deploy:
+  provider: cloudfiles
+  username: travis-worker
+  api_key:
+      secure: "BNg0ufGkThT15xEUSNtFWqbxlmVrPOHhp+2Yk9vh5aN+hwKVFo5rKA8zyii0/DiYDdCnvVtTacV2hTsmcCJ51+O2GwQWQt12RZ8Z8Kyg7xef6EK4NruNzN7gb852UvLDn9j++LHYumSAYBMXI/VgDm6veJlGLS+dY0h1q3mcbe4="
+  region: ORD
+  container: wheels
+  skip_cleanup: true

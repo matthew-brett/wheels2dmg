@@ -1,0 +1,6 @@
+[submodule ".travis/terryfy"]
+	path = .travis/terryfy
+	url = git://github.com/MacPython/terryfy.git
+[submodule ".travis/scipy-stack-osx-testing"]
+	path = .travis/scipy-stack-osx-testing
+	url = git://github.com/MacPython/scipy-stack-osx-testing.git
