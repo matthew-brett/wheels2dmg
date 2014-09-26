@@ -4,5 +4,7 @@ build/
 dist/
 tmp/
 scratch/
+__pycache__/
 MANIFEST
 .DS_Store
+*.egg-info/
