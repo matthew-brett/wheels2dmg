@@ -1,0 +1,5 @@
+# pip requirements file for wheels2dmg
+pip>=1.5.4
+jinja2
+wheel
+delocate>=0.6.0
