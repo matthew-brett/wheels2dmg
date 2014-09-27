@@ -53,6 +53,8 @@ There must be at least one REQ_SPEC or REQUIREMENT.
     parser.add_argument('--pkg-id-root', type=str,
                         help='Package id root for installing package receipt '
                         '(default is "com.github.MacPython")')
+    parser.add_argument('--delocate-wheels', action='store_true',
+                        help='Automatically delocate libraries in wheels')
     return make_pip_parser(parser)
 
 
@@ -75,5 +77,6 @@ def main():
                            args.get_pip_url,
                            args.dmg_build_dir,
                            args.scratch_dir,
-                           pkg_id_root = args.pkg_id_root)
+                           pkg_id_root = args.pkg_id_root,
+                           delocate_wheels = args.delocate_wheels)
     pkg_writer.write_dmg(args.dmg_out_dir)
