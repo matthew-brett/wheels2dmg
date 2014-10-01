@@ -24,12 +24,14 @@ script:
   - PKG_NAME=scipy-stack-py$PY_MN-$SCIPY_STACK_VERSION
   - hdiutil attach build_dir/$PKG_NAME.dmg
   - sudo installer -pkg /Volumes/$PKG_NAME/$PKG_NAME.pkg -verbose -target /
+    -dumplog
   - hdiutil detach /Volumes/$PKG_NAME
   # Run tests
+  - cd .travis/scipy-stack-osx-testing
   - mkdir tmp_for_test
   - cd tmp_for_test
-  - source ../.travis/scipy-stack-osx-testing/travis_test.sh
-  - cd ..
+  - source ../travis_test.sh
+  - cd ../../..
 before_deploy: cd build_dir
 deploy:
   provider: cloudfiles
