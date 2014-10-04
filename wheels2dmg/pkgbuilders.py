@@ -3,7 +3,8 @@
 from __future__ import division, print_function
 
 import os
-from os.path import exists, join as pjoin, abspath, expanduser, dirname
+from os.path import (exists, join as pjoin, abspath, expanduser, dirname,
+                     realpath)
 import shutil
 from subprocess import check_call
 try:
@@ -339,7 +340,7 @@ class PkgWriter(object):
                 wheel,
                 ('macosx_10_9_intel', 'macosx_10_9_x86_64'),
                 clobber=True)
-            if new_wheel != wheel:
+            if realpath(new_wheel) != realpath(wheel):
                 os.unlink(wheel)
 
     def write_requires(self):
