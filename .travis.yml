@@ -14,9 +14,12 @@ install:
   - $PYTHON_EXE setup.py install
   - mkdir build_dir
   - cd build_dir
+  - mkdir dmg_out
   - wheels2dmg scipy-stack $SCIPY_STACK_VERSION
         scipy matplotlib ipython[notebook,test]
         pandas numexpr sympy --python-version $VERSION
+        --dmg-build-dir=dmg_out
+  - ls dmg_out
   - cd ..
 script:
   # Install from disk image
@@ -28,6 +31,7 @@ script:
   # Do the install manually now
   - CWD=$PWD
   - cd /Volumes/$PKG_NAME
+  - ls wheels
   - $PIP_CMD install --no-index --upgrade --find-links wheels -r
     wheels/scipy-stack-$SCIPY_STACK_VERSION.txt
   - cd $CWD
