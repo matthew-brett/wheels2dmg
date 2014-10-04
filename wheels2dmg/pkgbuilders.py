@@ -340,7 +340,8 @@ class PkgWriter(object):
                 wheel,
                 ('macosx_10_9_intel', 'macosx_10_9_x86_64'),
                 clobber=True)
-            if realpath(new_wheel) != realpath(wheel):
+            # returned new_wheel is None or absolute path
+            if new_wheel and realpath(new_wheel) != realpath(wheel):
                 os.unlink(wheel)
 
     def write_requires(self):
