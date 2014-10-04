@@ -19,7 +19,7 @@ install:
         scipy matplotlib ipython[notebook,test]
         pandas numexpr sympy --python-version $VERSION
         --dmg-build-dir=dmg_out
-  - ls dmg_out
+  - ls dmg_out/wheels
   - cd ..
 script:
   # Install from disk image
