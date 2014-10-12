@@ -1,0 +1,23 @@
+.. -*- mode: rst -*-
+.. vim:ft=rst
+
+.. _changelog:
+
+#####################
+Wheels2dmg change log
+#####################
+
+********
+Releases
+********
+
+* 0.2 (Sunday October 11 2014)
+
+  Second public release
+
+  * Added travis-ci testing
+  * Make wheel delocation optional and off by default
+
+* 0.1
+
+  First public release
