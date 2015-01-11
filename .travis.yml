@@ -9,7 +9,7 @@ env:
   - VERSION=3.4.2
 install:
   - source .travis/terryfy/travis_tools.sh
-  - get_python_environment macpython $VERSION
+  - get_python_environment macpython $VERSION venv
   - $PIP_CMD install -r requirements.txt
   - $PYTHON_EXE setup.py install
   - mkdir build_dir
