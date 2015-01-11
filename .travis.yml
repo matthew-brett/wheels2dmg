@@ -9,10 +9,10 @@ env:
   - VERSION=3.4.2
 install:
   - source .travis/terryfy/travis_tools.sh
-  - sudo pip uninstall -y pip  # remove system-installed pip
   - get_python_environment macpython $VERSION
   - $PIP_CMD install -r requirements.txt
   - $PYTHON_EXE setup.py install
+  - sudo pip uninstall -y pip  # remove installed pip
   - mkdir build_dir
   - cd build_dir
   - wheels2dmg scipy-stack $SCIPY_STACK_VERSION
