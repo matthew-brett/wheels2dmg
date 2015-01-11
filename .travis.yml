@@ -12,11 +12,9 @@ install:
   - get_python_environment macpython $VERSION
   - $PIP_CMD install -r requirements.txt
   - $PYTHON_EXE setup.py install
-  - $PIP_CMD uninstall -y pip  # remove MacPython pip
-  - sudo pip uninstall -y pip  # and system pip
   - mkdir build_dir
   - cd build_dir
-  - wheels2dmg scipy-stack $SCIPY_STACK_VERSION
+  - sudo wheels2dmg scipy-stack $SCIPY_STACK_VERSION
         scipy matplotlib ipython[notebook,test]
         pandas numexpr sympy --python-version $VERSION
   - cd ..
