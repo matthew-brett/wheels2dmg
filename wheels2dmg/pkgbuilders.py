@@ -338,7 +338,8 @@ class PkgWriter(object):
                     delocate_wheel(wheel, require_archs='intel')
             new_wheel = add_platforms(
                 wheel,
-                ('macosx_10_9_intel', 'macosx_10_9_x86_64'),
+                ('macosx_10_9_intel', 'macosx_10_9_x86_64',
+                 'macosx_10_10_intel', 'macosx_10_10_x86_64'),
                 clobber=True)
             # returned new_wheel is None or absolute path
             if new_wheel and realpath(new_wheel) != realpath(wheel):
