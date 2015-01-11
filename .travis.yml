@@ -30,6 +30,7 @@ script:
   - cd .travis/scipy-stack-osx-testing
   - mkdir tmp_for_test
   - cd tmp_for_test
+  - stty columns 80 # set columns in terminal for sympy tests
   - source ../travis_test.sh
   - cd ../../..
 before_deploy: cd build_dir
