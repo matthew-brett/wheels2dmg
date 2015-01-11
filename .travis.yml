@@ -12,7 +12,7 @@ install:
   - get_python_environment macpython $VERSION
   - $PIP_CMD install -r requirements.txt
   - $PYTHON_EXE setup.py install
-  - $PIP_CMD pip uninstall -y pip  # remove installed pip
+  - $PIP_CMD uninstall -y pip  # remove installed pip
   - mkdir build_dir
   - cd build_dir
   - wheels2dmg scipy-stack $SCIPY_STACK_VERSION
