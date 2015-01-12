@@ -20,6 +20,8 @@ install:
   - cd ..
 script:
   # Install from disk image
+  # Set rows and columns for pandas and sympy tests
+  - stty rows 40 columns 80
   - PY_MN=`get_py_mm_nodot`
   - PKG_NAME=scipy-stack-py$PY_MN-$SCIPY_STACK_VERSION
   - hdiutil attach build_dir/$PKG_NAME.dmg
@@ -30,7 +32,6 @@ script:
   - cd .travis/scipy-stack-osx-testing
   - mkdir tmp_for_test
   - cd tmp_for_test
-  - stty columns 80 # set columns in terminal for sympy tests
   - source ../travis_test.sh
   - cd ../../..
 before_deploy: cd build_dir
